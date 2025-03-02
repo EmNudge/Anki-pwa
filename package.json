@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@zip-js/zip-js": "npm:@jsr/zip-js__zip-js@^2.7.57",
-    "limbo-wasm": "^0.0.14",
     "solid-js": "^1.9.5",
     "sql.js": "^1.12.0"
   },

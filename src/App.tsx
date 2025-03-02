@@ -13,7 +13,6 @@ function App() {
     const { cards, templates } = await getAnkiDbData(sqliteDbBlob);
 
     console.log(cards);
-
   };
 
   return (

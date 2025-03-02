@@ -11,9 +11,6 @@ importers:
       '@zip-js/zip-js':
         specifier: npm:@jsr/zip-js__zip-js@^2.7.57
         version: '@jsr/zip-js__zip-js@2.7.57'
-      limbo-wasm:
-        specifier: ^0.0.14
-        version: 0.0.14
       solid-js:
         specifier: ^1.9.5
         version: 1.9.5
@@ -488,9 +485,6 @@ packages:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
     engines: {node: '>=6'}
     hasBin: true
-
-  limbo-wasm@0.0.14:
-    resolution: {integrity: sha512-IBh4rF8YpOLknULNWz9/4E/GkbVa9WppdOczHZB9g3RSar+JALTxK7gchb93Ihk2blIBH3VDis6gpw8CjApF2w==}
 
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
@@ -1015,8 +1009,6 @@ snapshots:
   jsesc@3.1.0: {}
 
   json5@2.2.3: {}
-
-  limbo-wasm@0.0.14: {}
 
   lru-cache@5.1.1:
     dependencies:
