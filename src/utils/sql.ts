@@ -30,9 +30,15 @@ function getNotes(db: Database) {
   });
 }
 
+export type Template = {
+  afmt: string;
+  qfmt: string;
+  name: string;
+};
+
 type Model = {
   flds: { name: string }[];
-  tmpls: { afmt: string; qfmt: string; name: string }[];
+  tmpls: Template[];
   ord: number;
 };
 

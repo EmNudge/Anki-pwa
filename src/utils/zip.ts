@@ -1,8 +1,9 @@
 import { BlobWriter, Entry, TextWriter } from "@zip-js/zip-js";
 import { ZipReader } from "@zip-js/zip-js";
 import { BlobReader } from "@zip-js/zip-js";
-import { assert } from "./assert";
+import { assert, isTruthy } from "./assert";
 import { assertTruthy } from "./assert";
+import mime from "mime";
 
 export async function getAnkiDataFromZip(file: File) {
   const zipFileReader = new BlobReader(file);
@@ -19,19 +20,42 @@ export async function getAnkiDataFromZip(file: File) {
 }
 
 // expensive operation, maybe lazy load?
-async function getFilesFromEntries(entries: Entry[]) {
-  const mediaFileEntry = entries.find(entry => entry.filename === "media")
+async function getFilesFromEntries(
+  entries: Entry[],
+): Promise<Map<string, string>> {
+  const mediaFileEntry = entries.find((entry) => entry.filename === "media");
   assertTruthy(mediaFileEntry, "media file not found");
 
   const mediaFileText = await mediaFileEntry.getData!(new TextWriter());
 
   const mediaFile = JSON.parse(mediaFileText) as Record<number, string>;
-  const mediaFileMap = new Map(Object.entries(mediaFile))
+  const mediaFileMap = new Map(Object.entries(mediaFile));
 
-  return Promise.all(entries.filter(entry => mediaFileMap.has(entry.filename)).map(async entry => {
+  const filePromises = entries.map((entry) => {
+    const actualFilename = mediaFileMap.get(entry.filename);
+    if (!actualFilename) {
+      return null;
+    }
+
     assert("getData" in entry, "getData method not found");
-    return { data: await entry.getData!(new BlobWriter()), name: mediaFileMap.get(entry.filename) }
-  }))
+
+    return { entry, actualFilename };
+  }).filter(isTruthy).map(async ({ entry, actualFilename }) => {
+    const blob = await entry.getData!(new BlobWriter());
+
+    return {
+      data: new Blob([blob], {
+        type: mime.getType(actualFilename) ?? "application/octet-stream",
+      }),
+      name: actualFilename,
+    };
+  });
+
+  const files = await Promise.all(filePromises);
+
+  return new Map(
+    files.map((file) => [file.name, URL.createObjectURL(file.data)]),
+  );
 }
 
 async function getAnkiDbFromEntries(entries: Entry[]) {
