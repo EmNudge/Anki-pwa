@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import solid from "vite-plugin-solid";
 import solidStyled from "unplugin-solid-styled";
 import inspect from "vite-plugin-inspect";
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [
@@ -14,5 +15,6 @@ export default defineConfig({
       },
     }),
     inspect(),
+    tailwindcss(),
   ],
 });

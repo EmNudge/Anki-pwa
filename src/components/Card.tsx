@@ -27,12 +27,8 @@ export function Card(props: {
       min-height: 300px;
     }
 
-    .card-content {
-      padding: 2rem 1rem;
-
-      :global(img) {
-        height: 420px;
-      }
+    .card-content :global(img) {
+      height: 420px;
     }
 
     h1 {
