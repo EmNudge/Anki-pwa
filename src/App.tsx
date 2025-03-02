@@ -43,6 +43,8 @@ function App() {
     }
   `;
 
+  const [activeSide, setActiveSide] = createSignal<"front" | "back">("front");
+
   return (
     <>
       <div class="controls">
@@ -90,6 +92,14 @@ function App() {
                 })}
               />
             }
+            activeSide={activeSide()}
+            onReveal={() => {
+              setActiveSide("back");
+            }}
+            onChooseAnswer={(_answer) => {
+              setSelectedCard((cardNum) => cardNum + 1);
+              setActiveSide("front");
+            }}
           />
         )}
       </div>
