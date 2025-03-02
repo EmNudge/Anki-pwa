@@ -5,7 +5,7 @@ import { assert, isTruthy } from "./assert";
 import { assertTruthy } from "./assert";
 import mime from "mime";
 
-export async function getAnkiDataFromZip(file: File) {
+export async function getAnkiDataFromZip(file: Blob) {
   const zipFileReader = new BlobReader(file);
   const zipReader = new ZipReader(zipFileReader);
   const entries = await zipReader.getEntries();

@@ -7,6 +7,8 @@ import { Card } from "./components/Card";
 import { css } from "solid-styled";
 import { getRenderedCardString } from "./utils/render";
 
+const cache = await caches.open("anki-cache");
+
 function App() {
   const [templates, setTemplates] = createSignal<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = createSignal<number>(0);
@@ -16,19 +18,33 @@ function App() {
 
   const [mediaFiles, setMediaFiles] = createSignal<Map<string, string>>(new Map());
 
+  cache.match('anki-deck').then(async response => {
+    if (!response) {
+      return;
+    }
+
+    setDataFromBlob(await response.blob());
+  })
+
   const handleFileChange = async (event: Event) => {
     const file = (event.target as HTMLInputElement).files?.[0];
 
     assertTruthy(file, "No file selected");
 
-    const { sqliteDbBlob, files } = await getAnkiDataFromZip(file);
+    await cache.put('anki-deck', new Response(file));
+
+    await setDataFromBlob(file)
+  };
+
+  async function setDataFromBlob(blob: Blob) {
+    const { sqliteDbBlob, files } = await getAnkiDataFromZip(blob);
     const { cards, templates } = await getAnkiDbData(sqliteDbBlob);
 
     setTemplates(templates);
     setCards(cards);
 
     setMediaFiles(files);
-  };
+  }
 
   css`
     .dropdowns {
