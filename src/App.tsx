@@ -1,99 +1,98 @@
 import "./App.css";
 import { getAnkiDbData, Template } from "./utils/sql";
 import { getAnkiDataFromZip } from "./utils/zip";
-import { assertTruthy } from "./utils/assert";
 import { createSignal } from "solid-js";
 import { Card } from "./components/Card";
 import { css } from "solid-styled";
 import { getRenderedCardString } from "./utils/render";
+import { FilePicker } from "./components/FilePicker";
 
 const cache = await caches.open("anki-cache");
 
 function App() {
   const [templates, setTemplates] = createSignal<Template[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = createSignal<number>(0);
+  const [selectedTemplate, setSelectedTemplate] = createSignal<Template | null>(
+    null
+  );
 
   const [cards, setCards] = createSignal<{ [key: string]: string }[]>([]);
   const [selectedCard, setSelectedCard] = createSignal<number>(0);
 
-  const [mediaFiles, setMediaFiles] = createSignal<Map<string, string>>(new Map());
+  const [mediaFiles, setMediaFiles] = createSignal<Map<string, string>>(
+    new Map()
+  );
 
-  cache.match('anki-deck').then(async response => {
+  cache.match("anki-deck").then(async (response) => {
     if (!response) {
       return;
     }
 
     setDataFromBlob(await response.blob());
-  })
-
-  const handleFileChange = async (event: Event) => {
-    const file = (event.target as HTMLInputElement).files?.[0];
-
-    assertTruthy(file, "No file selected");
-
-    await cache.put('anki-deck', new Response(file));
-
-    await setDataFromBlob(file)
-  };
+  });
 
   async function setDataFromBlob(blob: Blob) {
     const { sqliteDbBlob, files } = await getAnkiDataFromZip(blob);
     const { cards, templates } = await getAnkiDbData(sqliteDbBlob);
 
     setTemplates(templates);
+    setSelectedTemplate(templates[0]);
     setCards(cards);
 
     setMediaFiles(files);
   }
 
   css`
+    main {
+      display: grid;
+      gap: 1rem;
+    }
+
     .dropdowns {
       display: flex;
       gap: 1rem;
       justify-content: center;
-    }
-    .controls {
-      display: grid;
-      gap: 1rem;
-      margin: 1rem;
     }
   `;
 
   const [activeSide, setActiveSide] = createSignal<"front" | "back">("front");
 
   return (
-    <>
-      <div class="controls">
-        <input type="file" id="upload" onChange={handleFileChange} />
+    <main>
+      {templates().length && cards().length && (
+        <div class="dropdowns">
+          <select
+            onChange={(e) =>
+              setSelectedTemplate(templates()[Number(e.target.value)])
+            }
+            class="border border-gray-400 rounded-md p-2"
+          >
+            {templates().map((template, index) => (
+              <option value={index} selected={template === selectedTemplate()}>
+                {template.name}
+              </option>
+            ))}
+          </select>
 
-        {templates().length && cards().length && (
-          <div class="dropdowns">
-            <select
-              onChange={(e) => setSelectedTemplate(Number(e.target.value))}
-            >
-              {templates().map((template, index) => (
-                <option value={index}>{template.name}</option>
-              ))}
-            </select>
-
-            <select onChange={(e) => setSelectedCard(Number(e.target.value))}>
-              {cards().map((_card, index) => (
-                <option value={index}>
-                  Card {(index + 1).toString().padStart(2, "0")}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
+          <select
+            onChange={(e) => setSelectedCard(Number(e.target.value))}
+            class="border border-gray-400 rounded-md p-2"
+          >
+            {cards().map((_card, index) => (
+              <option value={index} selected={index === selectedCard()}>
+                Card {(index + 1).toString().padStart(2, "0")}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
-        {templates()[selectedTemplate()] && cards()[selectedCard()] && (
+        {selectedTemplate() && cards()[selectedCard()] && (
           <Card
             front={
               <div
                 innerHTML={getRenderedCardString({
-                  templateString: templates()[selectedTemplate()].qfmt,
+                  templateString: selectedTemplate()!.qfmt,
                   card: cards()[selectedCard()],
                   mediaFiles: mediaFiles(),
                 })}
@@ -102,7 +101,7 @@ function App() {
             back={
               <div
                 innerHTML={getRenderedCardString({
-                  templateString: templates()[selectedTemplate()].afmt,
+                  templateString: selectedTemplate()!.afmt,
                   card: cards()[selectedCard()],
                   mediaFiles: mediaFiles(),
                 })}
@@ -119,7 +118,15 @@ function App() {
           />
         )}
       </div>
-    </>
+
+      <FilePicker
+        onFileChange={async (file) => {
+          await cache.put("anki-deck", new Response(file));
+
+          await setDataFromBlob(file);
+        }}
+      />
+    </main>
   );
 }
 
