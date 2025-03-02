@@ -7,7 +7,7 @@ import { css } from "solid-styled";
 import { getRenderedCardString } from "./utils/render";
 import { FilePicker } from "./components/FilePicker";
 
-const cache = await caches.open("anki-cache");
+const ankiCachePromise = caches.open("anki-cache");
 
 function App() {
   const [templates, setTemplates] = createSignal<Template[]>([]);
@@ -22,7 +22,8 @@ function App() {
     new Map()
   );
 
-  cache.match("anki-deck").then(async (response) => {
+  ankiCachePromise.then(async (cache) => {
+    const response = await cache.match("anki-deck");
     if (!response) {
       return;
     }
@@ -121,6 +122,7 @@ function App() {
 
       <FilePicker
         onFileChange={async (file) => {
+          const cache = await ankiCachePromise;
           await cache.put("anki-deck", new Response(file));
 
           await setDataFromBlob(file);
