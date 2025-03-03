@@ -1,11 +1,11 @@
 import "./App.css";
-import { getAnkiDbData, Template } from "./utils/sql";
-import { getAnkiDataFromZip } from "./utils/zip";
+import { type Template } from "./ankiModel";
 import { createSignal } from "solid-js";
 import { Card } from "./components/Card";
 import { css } from "solid-styled";
 import { getRenderedCardString } from "./utils/render";
 import { FilePicker } from "./components/FilePicker";
+import { getAnkiDataFromBlob } from "./ankiParser";
 
 const ankiCachePromise = caches.open("anki-cache");
 
@@ -32,8 +32,7 @@ function App() {
   });
 
   async function setDataFromBlob(blob: Blob) {
-    const { sqliteDbBlob, files } = await getAnkiDataFromZip(blob);
-    const { cards, templates } = await getAnkiDbData(sqliteDbBlob);
+    const { cards, templates, files } = await getAnkiDataFromBlob(blob);
 
     setTemplates(templates);
     setSelectedTemplate(templates[0]);

@@ -5,6 +5,12 @@ import inspect from "vite-plugin-inspect";
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+  optimizeDeps: {
+    exclude: ['@bokuweb/zstd-wasm'],
+    esbuildOptions: {
+      target: 'es2020',
+    },
+  },
   plugins: [
     solid(),
     solidStyled.vite({
