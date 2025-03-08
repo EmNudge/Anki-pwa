@@ -31,6 +31,11 @@ export function Card(props: {
       height: 420px;
     }
 
+    .card-content :global(hr) {
+      margin: 1rem 0;
+      opacity: 0.25;
+    }
+
     h1 {
       margin: 0;
       font-weight: 400;

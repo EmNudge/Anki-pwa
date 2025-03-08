@@ -9,10 +9,18 @@ import {
   parseTemplatesProto,
 } from "./ankiParser/anki21b";
 
+export type Card = {
+  [k: string]: string;
+};
+
+export type Template = {
+  afmt: string;
+  qfmt: string;
+  name: string;
+};
+
 type AnkiData = {
-  cards: {
-    [k: string]: string;
-  }[];
+  cards: Card[];
   templates: Template[];
   notesTypes: {
     name: string;
@@ -102,7 +110,11 @@ function getDataFromOldAnki(db: Database): AnkiData {
     const modelsJson = collectionData[9];
     assert(typeof modelsJson === "string", "Models JSON is not string");
 
-    const models = JSON.parse(modelsJson as string) as Record<string, Model>;
+    const models = JSON.parse(modelsJson as string) as Record<string, {
+      flds: { name: string }[];
+      tmpls: Template[];
+      ord: number;
+    }>;
 
     return Object.entries(models)[0][1];
   })();
@@ -124,15 +136,3 @@ function getDataFromOldAnki(db: Database): AnkiData {
 
   return { cards, templates: model.tmpls, notesTypes: null };
 }
-
-export type Template = {
-  afmt: string;
-  qfmt: string;
-  name: string;
-};
-
-type Model = {
-  flds: { name: string }[];
-  tmpls: Template[];
-  ord: number;
-};
