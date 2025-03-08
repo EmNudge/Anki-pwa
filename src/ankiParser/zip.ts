@@ -1,22 +1,27 @@
 import { BlobWriter, Entry, TextWriter } from "@zip-js/zip-js";
 import { ZipReader } from "@zip-js/zip-js";
 import { BlobReader } from "@zip-js/zip-js";
-import { assert, isTruthy } from "./assert";
-import { assertTruthy } from "./assert";
+import { assert, isTruthy } from "../utils/assert";
+import { assertTruthy } from "../utils/assert";
 import mime from "mime";
+import init, { decompress } from "@dweb-browser/zstd-wasm";
+import zstd_wasm_url from "@dweb-browser/zstd-wasm/zstd_wasm_bg.wasm?url";
+
+const initWasm = init as unknown as (path: string) => Promise<void>;
+const wasmInit = initWasm(zstd_wasm_url);
 
 export async function getAnkiDataFromZip(file: Blob) {
   const zipFileReader = new BlobReader(file);
   const zipReader = new ZipReader(zipFileReader);
   const entries = await zipReader.getEntries();
 
-  const sqliteDbBlob = await getAnkiDbFromEntries(entries);
+  const ankiDb = await getAnkiDbFromEntries(entries);
 
   const files = await getFilesFromEntries(entries);
 
   await zipReader.close();
 
-  return { sqliteDbBlob, files };
+  return { ankiDb, files };
 }
 
 // expensive operation, maybe lazy load?
@@ -28,7 +33,14 @@ async function getFilesFromEntries(
 
   const mediaFileText = await mediaFileEntry.getData!(new TextWriter());
 
-  const mediaFile = JSON.parse(mediaFileText) as Record<number, string>;
+  const mediaFile = (() => {
+    try {
+      return JSON.parse(mediaFileText) as Record<number, string>;
+    } catch (e) {
+      // console.error(e);
+      return {};
+    }
+  })()
   const mediaFileMap = new Map(Object.entries(mediaFile));
 
   const filePromises = entries.map((entry) => {
@@ -58,23 +70,36 @@ async function getFilesFromEntries(
   );
 }
 
-async function getAnkiDbFromEntries(entries: Entry[]) {
-  const sqliteDbEntry = (() => {
-    const dbEntries = entries.filter((entry) =>
-      entry.filename.split(".").at(-1)?.startsWith("anki")
-    );
+export type AnkiDb = { type: "21b" | "21" | "2"; array: Uint8Array };
 
-    // return "old" version first
-    return (
-      dbEntries.find((entry) => entry.filename === "collection.anki21") ??
-        dbEntries.find((entry) => entry.filename === "collection.anki2")
-    );
+async function getAnkiDbFromEntries(
+  entries: Entry[],
+): Promise<AnkiDb> {
+  const sqliteDbEntry = (() => {
+    const fileMap = new Map(entries.map((entry) => [entry.filename, entry]));
+
+    return fileMap.get("collection.anki21b") ??
+      fileMap.get("collection.anki21") ?? fileMap.get("collection.anki2");
   })();
 
   assertTruthy(sqliteDbEntry, "sqlite.db not found");
   assert("getData" in sqliteDbEntry, "getData method not found");
 
-  const sqliteDbBlob = await sqliteDbEntry.getData!(new BlobWriter());
+  const sqliteDbBlob = await sqliteDbEntry.getData?.(new BlobWriter());
 
-  return sqliteDbBlob;
+  assertTruthy(sqliteDbBlob, "blob not parsed from data");
+
+  const sqliteDbBlobByteArray = new Uint8Array(
+    await sqliteDbBlob.arrayBuffer(),
+  );
+
+  if (sqliteDbEntry.filename === "collection.anki21b") {
+    await wasmInit;
+    return { type: "21b", array: decompress(sqliteDbBlobByteArray) };
+  }
+
+  return {
+    type: sqliteDbEntry.filename === "collection.anki21" ? "21" : "2",
+    array: sqliteDbBlobByteArray,
+  };
 }
