@@ -4,6 +4,7 @@ import { executeQueryAll } from "./utils/sql";
 import wasm from "sql.js/dist/sql-wasm.wasm?url";
 import { AnkiDb } from "./ankiParser/zip";
 import {
+  getNotesType,
   parseFieldConfigProto,
   parseTemplatesProto,
 } from "./ankiParser/anki21b";
@@ -13,6 +14,12 @@ type AnkiData = {
     [k: string]: string;
   }[];
   templates: Template[];
+  notesTypes: {
+    name: string;
+    css: string;
+    latexPre: string;
+    latexPost: string;
+  }[] | null;
 };
 
 export async function getAnkiDbData(sqliteDbBlob: AnkiDb): Promise<AnkiData> {
@@ -83,7 +90,9 @@ function getDataFromAnki21b(db: Database): AnkiData {
     });
   })();
 
-  return { cards, templates };
+  const notesTypes = getNotesType(db);
+
+  return { cards, templates, notesTypes };
 }
 
 function getDataFromOldAnki(db: Database): AnkiData {
@@ -113,7 +122,7 @@ function getDataFromOldAnki(db: Database): AnkiData {
     Object.fromEntries(fields.map((field, index) => [field, noteFields[index]]))
   );
 
-  return { cards, templates: model.tmpls };
+  return { cards, templates: model.tmpls, notesTypes: null };
 }
 
 export type Template = {
