@@ -1,6 +1,6 @@
 import "./App.css";
 import { type Template } from "./ankiModel";
-import { createSignal } from "solid-js";
+import { createMemo, createSignal } from "solid-js";
 import { Card } from "./components/Card";
 import { css } from "solid-styled";
 import { getRenderedCardString } from "./utils/render";
@@ -56,6 +56,33 @@ function App() {
 
   const [activeSide, setActiveSide] = createSignal<"front" | "back">("front");
 
+  const renderedCard = createMemo(() => {
+    if (!selectedTemplate()) {
+      return null;
+    }
+    const { qfmt, afmt } = selectedTemplate()!;
+    const card = cards()[selectedCard()];
+
+    if (!card) {
+      return null;
+    }
+
+    const frontSideHtml = getRenderedCardString({
+      templateString: qfmt,
+      variables: { ...card },
+      mediaFiles: mediaFiles(),
+    });
+
+    const backSideHtml = getRenderedCardString({
+      templateString: afmt,
+      // https://docs.ankiweb.net/templates/fields.html#special-fields
+      variables: { ...card, FrontSide: frontSideHtml },
+      mediaFiles: mediaFiles(),
+    });
+
+    return { frontSideHtml, backSideHtml };
+  });
+
   return (
     <main>
       {templates().length && cards().length && (
@@ -87,36 +114,27 @@ function App() {
       )}
 
       <div>
-        {selectedTemplate() && cards()[selectedCard()] && (
-          <Card
-            front={
-              <div
-                innerHTML={getRenderedCardString({
-                  templateString: selectedTemplate()!.qfmt,
-                  card: cards()[selectedCard()],
-                  mediaFiles: mediaFiles(),
-                })}
-              />
-            }
-            back={
-              <div
-                innerHTML={getRenderedCardString({
-                  templateString: selectedTemplate()!.afmt,
-                  card: cards()[selectedCard()],
-                  mediaFiles: mediaFiles(),
-                })}
-              />
-            }
-            activeSide={activeSide()}
-            onReveal={() => {
-              setActiveSide("back");
-            }}
-            onChooseAnswer={(_answer) => {
-              setSelectedCard((cardNum) => cardNum + 1);
-              setActiveSide("front");
-            }}
-          />
-        )}
+        {(() => {
+          const card = renderedCard();
+          if (!card) {
+            return null;
+          }
+
+          return (
+            <Card
+              front={<div innerHTML={card.frontSideHtml} />}
+              back={<div innerHTML={card.backSideHtml} />}
+              activeSide={activeSide()}
+              onReveal={() => {
+                setActiveSide("back");
+              }}
+              onChooseAnswer={(_answer) => {
+                setSelectedCard((cardNum) => cardNum + 1);
+                setActiveSide("front");
+              }}
+            />
+          )
+        })()}
       </div>
 
       <FilePicker

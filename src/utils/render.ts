@@ -1,19 +1,19 @@
 // security risk - figure out how to do this safely
 // maybe embed in an iframe?
 export function getRenderedCardString(
-  { templateString, card, mediaFiles }: {
+  { templateString, variables, mediaFiles }: {
     templateString: string;
-    card: { [key: string]: string };
+    variables: { [key: string]: string };
     mediaFiles: Map<string, string>;
   },
 ) {
   let renderedString = templateString;
   
-  renderedString = flattenOptionalSections(templateString, card);
+  renderedString = flattenOptionalSections(templateString, variables);
   
-  renderedString = renderedString.replace(/\{\{(.*?)\}\}/g, (match, p1) => {
-    const field = card[p1];
-    return field ? field : match;
+  renderedString = renderedString.replace(/\{\{(.*?)\}\}/g, (_match, p1) => {
+    const field = variables[p1];
+    return field ?? '';
   });
 
   renderedString = replaceMediaFiles(renderedString, mediaFiles);
