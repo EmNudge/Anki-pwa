@@ -1,148 +1,68 @@
+import { getNotesType } from "./proto";
+
 import { Database } from "sql.js";
-import { executeQuery, executeQueryAll } from "../../utils/sql";
-import protobuf from "protobufjs";
-import deckConfigProto from "./deck_config.proto?raw";
-import notesTypeProto from "./notestype.proto?raw";
-import templatesProto from "./templates.proto?raw";
-import fieldConfigProto from "./field.proto?raw";
+import { executeQueryAll } from "~/utils/sql";
+import { parseFieldConfigProto, parseTemplatesProto } from "./proto";
 
-type Anki21bDeckConfig = {
-  answerAction: number;
-  buryInterdayLearning: boolean;
-  buryNew: boolean;
-  buryReviews: boolean;
-  capAnswerTimeToSecs: number;
-  desiredRetention: number;
-  disableAutoplay: boolean;
-  easyDaysPercentages: number[];
-  easyMultiplier: number;
-  fsrsParams_4: unknown[];
-  fsrsParams_5: unknown[];
-  graduatingIntervalEasy: number;
-  graduatingIntervalGood: number;
-  hardMultiplier: number;
-  historicalRetention: number;
-  ignoreRevlogsBeforeDate: string;
-  initialEase: number;
-  interdayLearningMix: number;
-  intervalMultiplier: number;
-  lapseMultiplier: number;
-  learnSteps: number[];
-  leechAction: number;
-  leechThreshold: number;
-  maximumReviewInterval: number;
-  minimumLapseInterval: number;
-  newCardGatherPriority: number;
-  newCardInsertOrder: number;
-  newCardSortOrder: number;
-  newMix: number;
-  newPerDay: number;
-  newPerDayMinimum: number;
-  other: unknown[];
-  paramSearch: string;
-  questionAction: number;
-  relearnSteps: number[];
-  reviewOrder: number;
-  reviewsPerDay: number;
-  secondsToShowAnswer: number;
-  secondsToShowQuestion: number;
-  showTimer: boolean;
-  skipQuestionWhenReplayingAnswer: boolean;
-  stopTimerOnAnswer: boolean;
-  waitForAudio: boolean;
-};
-
-export function getDeckConfig(db: Database) {
-  const deckConfig = executeQuery<{
-    config: Uint8Array;
-    id: number;
-    mtime_secs: number;
-    name: string;
-    usn: number;
-  }>(db, "select * from deck_config");
-
-  const { root } = protobuf.parse(deckConfigProto);
-  const DeckConfig = root.lookupType("ConfigInDeckConfig");
-
-  const deckConfigParsed = DeckConfig.decode(
-    deckConfig.config,
-  ) as unknown as Anki21bDeckConfig;
-
-  return { ...deckConfig, config: deckConfigParsed };
-}
-
-export function getNotesType(db: Database) {
+export function getDataFromAnki21b(db: Database) {
   /**
-   * Maps an id to a css block and a latex pre/post note
+   * Fields define the font size and name for each side of a card.
+   * Their key is a composite of ntid + ord and is identical to the ntid of one row in templates
    */
-  const notesTypes = (() => {
-    const notesTypes = executeQueryAll<{
-      id: number;
-      name: string;
+  const fields = (() => {
+    const fields = executeQueryAll<{
       config: Uint8Array;
-    }>(db, "SELECT cast(id as text) as id, name, config FROM notetypes");
+      name: string;
+      ntid: string;
+    }>(db, "SELECT name, config, cast(ntid as text) as ntid FROM fields");
 
-    return notesTypes.map((notesType) => ({
-      name: notesType.name,
-      ...parseNotesTypeConfigProto(notesType.config),
+    return fields.map((field) => ({
+      ...field,
+      config: parseFieldConfigProto(field.config),
     }));
   })();
 
-  return notesTypes;
-}
+  const cards = (() => {
+    /**
+     * Notes define content. 
+     * They have a flds "array" that has its keys as entries in the fields table.
+     */
+    const notes = executeQueryAll<{
+      flds: string;
+      mid: string;
+      tags: string;
+    }>(
+      db,
+      "SELECT flds, tags, cast(mid as text) as mid FROM notes",
+    );
 
-type Anki21bNotesTypeConfig = {
-  css: string;
-  kind: number;
-  latexPost: string;
-  latexPre: string;
-  latexSvg: boolean;
-  originalId: number | null;
-  originalStockKind: number;
-  other: unknown[];
-  reqs: { fieldOrds: number[]; kind: number }[];
-  sortFieldIdx: number;
-  targetDeckIdUnused: number;
-};
+    return notes.map((note) => {
+      const fieldNames = fields.filter((field) => note.mid === field.ntid).map((field) => field.name)
 
-export function parseNotesTypeConfigProto(proto: Uint8Array) {
-  const { root } = protobuf.parse(notesTypeProto);
-  const NotesTypeConfig = root.lookupType("NotesTypeConfig");
+      return Object.fromEntries(note.flds.split("\x1F").map((value, i) => [fieldNames[i], value]))
+    });
+  })();
 
-  return NotesTypeConfig.decode(proto) as unknown as Anki21bNotesTypeConfig;
-}
+  const templates = (() => {
+    const templates = executeQueryAll<{
+      name: string;
+      config: Uint8Array;
+      ntid: string;
+    }>(db, "SELECT name, config, cast(ntid as text) as ntid FROM templates");
 
-type Anki21bTemplate = {
-  aFormat: string;
-  id: number;
-  qFormat: string;
-};
-export function parseTemplatesProto(proto: Uint8Array) {
-  const { root } = protobuf.parse(templatesProto);
-  const Template = root.lookupType("TemplateConfig");
+    return templates.map((template) => {
+      const { aFormat, qFormat, id } = parseTemplatesProto(template.config);
 
-  return Template.decode(proto) as unknown as Anki21bTemplate;
-}
+      return {
+        name: template.name,
+        afmt: aFormat,
+        qfmt: qFormat,
+        id,
+      };
+    });
+  })();
 
-type Anki21bFieldConfig = {
-  sticky: boolean;
-  rtl: boolean;
-  fontName: string;
-  fontSize: number;
-  description: string;
-  plainText: boolean;
-  collapsed: boolean;
-  excludeFromSearch: boolean;
-  // used for merging notetypes on import (Anki 23.10)
-  id?: number;
-  // Can be used to uniquely identify required fields.
-  tag?: number;
-  preventDeletion: boolean;
-  other: Uint8Array;
-};
-export function parseFieldConfigProto(proto: Uint8Array) {
-  const { root } = protobuf.parse(fieldConfigProto);
-  const FieldConfig = root.lookupType("FieldConfig");
+  const notesTypes = getNotesType(db);
 
-  return FieldConfig.decode(proto) as unknown as Anki21bFieldConfig;
+  return { cards, templates, notesTypes };
 }
