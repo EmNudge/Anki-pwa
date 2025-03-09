@@ -44,6 +44,9 @@ importers:
       tailwindcss:
         specifier: ^4.0.9
         version: 4.0.9
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
       zstd-codec:
         specifier: ^0.1.5
         version: 0.1.5
@@ -1191,6 +1194,9 @@ packages:
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
 
+  zod@3.24.2:
+    resolution: {integrity: sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==}
+
   zstd-codec@0.1.5:
     resolution: {integrity: sha512-v3fyjpK8S/dpY/X5WxqTK3IoCnp/ZOLxn144GZVlNUjtwAchzrVo03h+oMATFhCIiJ5KTr4V3vDQQYz4RU684g==}
 
@@ -2180,5 +2186,7 @@ snapshots:
   wrappy@1.0.2: {}
 
   yallist@3.1.1: {}
+
+  zod@3.24.2: {}
 
   zstd-codec@0.1.5: {}
