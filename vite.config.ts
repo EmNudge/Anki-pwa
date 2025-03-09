@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import solid from "vite-plugin-solid";
 import solidStyled from "unplugin-solid-styled";
 import inspect from "vite-plugin-inspect";
+import path from "path";
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
@@ -9,6 +10,11 @@ export default defineConfig({
     exclude: ['@bokuweb/zstd-wasm'],
     esbuildOptions: {
       target: 'es2020',
+    },
+  },
+  resolve: {
+    alias: {
+      "~": path.resolve(__dirname, "src"),
     },
   },
   plugins: [

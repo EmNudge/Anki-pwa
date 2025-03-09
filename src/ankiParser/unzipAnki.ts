@@ -4,11 +4,7 @@ import { BlobReader } from "@zip-js/zip-js";
 import { assert, isTruthy } from "../utils/assert";
 import { assertTruthy } from "../utils/assert";
 import mime from "mime";
-import init, { decompress } from "@dweb-browser/zstd-wasm";
-import zstd_wasm_url from "@dweb-browser/zstd-wasm/zstd_wasm_bg.wasm?url";
-
-const initWasm = init as unknown as (path: string) => Promise<void>;
-const wasmInit = initWasm(zstd_wasm_url);
+import { decompressZstd } from "../utils/zstd";
 
 export async function getAnkiDataFromZip(file: Blob) {
   const zipFileReader = new BlobReader(file);
@@ -94,8 +90,8 @@ async function getAnkiDbFromEntries(
   );
 
   if (sqliteDbEntry.filename === "collection.anki21b") {
-    await wasmInit;
-    return { type: "21b", array: decompress(sqliteDbBlobByteArray) };
+    const array = await decompressZstd(sqliteDbBlobByteArray)
+    return { type: "21b", array };
   }
 
   return {
