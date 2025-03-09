@@ -20,10 +20,7 @@ ankiCachePromise.then(async (cache) => {
 
 const [ankiData] = createResource(
   blob,
-  (newBlob) => {
-    console.log("newBlob", newBlob);
-    return getAnkiDataFromBlob(newBlob)
-  },
+  (newBlob) => getAnkiDataFromBlob(newBlob),
 );
 
 export const [selectedCard, setSelectedCard] = createSignal(0);

@@ -1,6 +1,7 @@
 import { Database } from "sql.js";
 import { assert } from "~/utils/assert";
 import { executeQuery, executeQueryAll } from "~/utils/sql";
+import { z } from 'zod'
 
 export function getDataFromAnki2(db: Database) {
   const model = (() => {
@@ -10,16 +11,24 @@ export function getDataFromAnki2(db: Database) {
       dconf: string;
     }>(db, "SELECT * from col")
 
-    const models = JSON.parse(colData.models) as Record<string, {
-      flds: { name: string }[];
-      tmpls: {
-        name: string;
-        afmt: string;
-        qfmt: string;
-        id: number;
-      }[];
-      ord: number;
-    }>;
+    const modelSchema = z.record(z.object({
+      id: z.number(),
+      css: z.string(),
+      latexPre: z.string(),
+      latexPost: z.string(),
+      flds: z.array(z.object({
+        name: z.string()
+      })),
+      tmpls: z.array(z.object({
+        name: z.string(),
+        afmt: z.string(),
+        qfmt: z.string(),
+        ord: z.number(),
+        id: z.number().nullable()
+      })),
+    }));
+
+    const models = modelSchema.parse(JSON.parse(colData.models));
 
     return Object.entries(models)[0][1];
   })();
