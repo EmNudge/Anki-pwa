@@ -1,9 +1,11 @@
+type Variables = { [key: string]: string | null };
+
 // security risk - figure out how to do this safely
 // maybe embed in an iframe?
 export function getRenderedCardString(
   { templateString, variables, mediaFiles }: {
     templateString: string;
-    variables: { [key: string]: string };
+    variables: Variables;
     mediaFiles: Map<string, string>;
   },
 ) {
@@ -36,7 +38,7 @@ function replaceMediaFiles(renderedString: string, mediaFiles: Map<string, strin
  * If card[section] is not present, the section is removed.
  * If it is present, the guards are removed and the content remains.
  */
-function flattenOptionalSections(templateString: string, card: { [key: string]: string }) {
+function flattenOptionalSections(templateString: string, card: Variables) {
   let renderedString = templateString;
 
   const optionalSections = [
