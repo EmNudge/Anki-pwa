@@ -6,13 +6,13 @@ import { getRenderedCardString } from "./utils/render";
 import { FilePicker } from "./components/FilePicker";
 import {
   ankiCachePromise,
-  cards,
-  mediaFiles,
-  selectedCard,
-  selectedTemplate,
+  cardsSig,
+  mediaFilesSig,
+  selectedCardSig,
+  selectedTemplateSig,
   setBlob,
-  setSelectedCard,
-  templates,
+  setSelectedCardSig,
+  templatesSig,
 } from "./stores";
 
 function App() {
@@ -47,8 +47,8 @@ function App() {
   const [activeSide, setActiveSide] = createSignal<"front" | "back">("front");
 
   const renderedCard = createMemo(() => {
-    const template = templates()[selectedTemplate()];
-    const card = cards()[selectedCard()];
+    const template = templatesSig()?.[selectedTemplateSig()];
+    const card = cardsSig()[selectedCardSig()];
 
     if (!template || !card) {
       return null;
@@ -56,15 +56,15 @@ function App() {
 
     const frontSideHtml = getRenderedCardString({
       templateString: template.qfmt,
-      variables: { ...card },
-      mediaFiles: mediaFiles(),
+      variables: { ...card.values },
+      mediaFiles: mediaFilesSig(),
     });
 
     const backSideHtml = getRenderedCardString({
       templateString: template.afmt,
       // https://docs.ankiweb.net/templates/fields.html#special-fields
-      variables: { ...card, FrontSide: frontSideHtml },
-      mediaFiles: mediaFiles(),
+      variables: { ...card.values, FrontSide: frontSideHtml },
+      mediaFiles: mediaFilesSig(),
     });
 
     return { frontSideHtml, backSideHtml };
@@ -88,7 +88,7 @@ function App() {
                 setActiveSide("back");
               }}
               onChooseAnswer={(_answer) => {
-                setSelectedCard((prevCard) => prevCard + 1);
+                setSelectedCardSig((prevCard) => prevCard + 1);
                 setActiveSide("front");
               }}
             />
@@ -96,7 +96,7 @@ function App() {
         })()}
       </div>
 
-      {cards().length === 0 && (
+      {cardsSig().length === 0 && (
         <FilePicker
           onFileChange={async (file) => {
             const cache = await ankiCachePromise;

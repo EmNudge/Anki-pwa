@@ -109,7 +109,9 @@ export function parseNotesTypeConfigProto(proto: Uint8Array) {
   const { root } = protobuf.parse(notesTypeProto);
   const NotesTypeConfig = root.lookupType("NotesTypeConfig");
 
-  return NotesTypeConfig.decode(proto) as unknown as Anki21bNotesTypeConfig;
+  return NotesTypeConfig.toObject(NotesTypeConfig.decode(proto), {
+    longs: String,
+  }) as Anki21bNotesTypeConfig;
 }
 
 type Anki21bTemplate = {
@@ -121,7 +123,9 @@ export function parseTemplatesProto(proto: Uint8Array) {
   const { root } = protobuf.parse(templatesProto);
   const Template = root.lookupType("TemplateConfig");
 
-  return Template.decode(proto) as unknown as Anki21bTemplate;
+  return Template.toObject(Template.decode(proto), {
+    longs: String,
+  }) as Anki21bTemplate;
 }
 
 type Anki21bFieldConfig = {
