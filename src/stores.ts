@@ -18,25 +18,23 @@ ankiCachePromise.then(async (cache) => {
 });
 
 
-const [ankiData] = createResource(
+const [ankiDataSig] = createResource(
   blob,
   (newBlob) => getAnkiDataFromBlob(newBlob),
 );
 
-export const [selectedCard, setSelectedCard] = createSignal(0);
-export const cards = createMemo(() => {
-  const cards = ankiData()?.cards ?? [];
-  setSelectedCard(0);
-  return cards
+export const [selectedCardSig, setSelectedCardSig] = createSignal(0);
+export const cardsSig = createMemo(() => {
+  setSelectedCardSig(0);
+  return ankiDataSig()?.cards ?? []
 });
 
-export const [selectedTemplate, setSelectedTemplate] = createSignal(0);
-export const templates = createMemo(() => {
-  const templates = ankiData()?.templates ?? [];
-  setSelectedTemplate(0);
-  return templates;
+export const [selectedTemplateSig, setSelectedTemplateSig] = createSignal(0);
+export const templatesSig = createMemo(() => {
+  setSelectedTemplateSig(0);
+  return cardsSig()[selectedCardSig()]?.templates;
 });
 
-export const mediaFiles = createMemo(() =>
-  ankiData()?.files ?? new Map<string, string>()
+export const mediaFilesSig = createMemo(() =>
+  ankiDataSig()?.files ?? new Map<string, string>()
 );

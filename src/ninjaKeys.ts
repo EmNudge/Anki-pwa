@@ -1,14 +1,16 @@
-import { cards, setBlob } from "./stores";
-import { setSelectedCard } from "./stores";
-import { templates } from "./stores";
+import { cardsSig, setBlob } from "./stores";
+import { setSelectedCardSig } from "./stores";
+import { templatesSig } from "./stores";
 import { createEffect } from "solid-js";
-import { setSelectedTemplate } from "./stores";
+import { setSelectedTemplateSig } from "./stores";
 import { assertTruthy } from "./utils/assert";
 import "ninja-keys";
 
 function addCommandsToCommandPalette() {
   const ninja = document.querySelector("ninja-keys");
   assertTruthy(ninja, "ninja-keys not found");
+
+  const templates = templatesSig();
 
   ninja.data = [
     {
@@ -28,49 +30,53 @@ function addCommandsToCommandPalette() {
       },
     },
     {
-      id: "next-card",  
+      id: "next-card",
       title: "Next Card",
       hotkey: "ctrl+N",
       handler: () => {
-        setSelectedCard((prevCard) => prevCard + 1);
+        setSelectedCardSig((prevCard) => prevCard + 1);
       },
     },
     {
       id: "select-card",
       title: "Select Card",
       hotkey: "ctrl+S",
-      children: cards().map((_card, index) => `Card ${index + 1}`),
+      children: cardsSig().map((_card, index) => `Card ${index + 1}`),
       handler: () => {
-        ninja.open({ parent: 'select-card' });
-        return {keepOpen: true};
+        ninja.open({ parent: "select-card" });
+        return { keepOpen: true };
       },
     },
-    {
-      id: "select-template",
-      title: "Select Template",
-      hotkey: "ctrl+T",
-      children: templates().map((template) => template.name),
-      handler: () => {
-        ninja.open({ parent: 'select-template' });
-        return {keepOpen: true};
-      },
-    },
-    ...cards().map((_card, index) => ({
+    ...cardsSig().map((_card, index) => ({
       id: `Card ${index + 1}`,
       title: `Card ${index + 1}`,
       parent: "select-card",
       handler: () => {
-        setSelectedCard(index);
+        setSelectedCardSig(index);
       },
     })),
-    ...templates().map((template, index) => ({
-      id: template.name,
-      title: template.name,
-      parent: "select-template",
-      handler: () => {
-        setSelectedTemplate(index);
-      },
-    })),
+    ...(templates
+      ? [
+        {
+          id: "select-template",
+          title: "Select Template",
+          hotkey: "ctrl+T",
+          children: templates.map((template) => template.name),
+          handler: () => {
+            ninja.open({ parent: "select-template" });
+            return { keepOpen: true };
+          },
+        },
+        ...templates.map((template, index) => ({
+          id: template.name,
+          title: template.name,
+          parent: "select-template",
+          handler: () => {
+            setSelectedTemplateSig(index);
+          },
+        })),
+      ]
+      : []),
   ];
 }
 

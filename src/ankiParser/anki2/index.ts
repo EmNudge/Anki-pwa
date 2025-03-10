@@ -1,54 +1,55 @@
 import { Database } from "sql.js";
-import { assert } from "~/utils/assert";
 import { executeQuery, executeQueryAll } from "~/utils/sql";
-import { z } from 'zod'
+import { modelSchema } from "./jsonParsers";
+import { z } from "zod";
+import { assertTruthy } from "~/utils/assert";
 
-export function getDataFromAnki2(db: Database) {
-  const model = (() => {
+export type AnkiDB2Data = {
+  cards: {
+    values: {
+      [k: string]: string | null;
+    };
+    tags: string[];
+    templates: z.infer<typeof modelSchema>[string]["tmpls"];
+  }[];
+  notesTypes: null;
+}
+
+export function getDataFromAnki2(db: Database): AnkiDB2Data {
+  const models = (() => {
+    // anki2 and anki21 only use the first row of the col table
+    // models, decks, and dconf are JSON strings
     const colData = executeQuery<{
+      conf: string;
       models: string;
       decks: string;
       dconf: string;
-    }>(db, "SELECT * from col")
+      tags: string;
+    }>(db, "SELECT * from col");
 
-    const modelSchema = z.record(z.object({
-      id: z.number(),
-      css: z.string(),
-      latexPre: z.string(),
-      latexPost: z.string(),
-      flds: z.array(z.object({
-        name: z.string()
-      })),
-      tmpls: z.array(z.object({
-        name: z.string(),
-        afmt: z.string(),
-        qfmt: z.string(),
-        ord: z.number(),
-        id: z.number().nullable()
-      })),
-    }));
-
-    const models = modelSchema.parse(JSON.parse(colData.models));
-
-    return Object.entries(models)[0][1];
+    return modelSchema.parse(JSON.parse(colData.models));
   })();
 
-  const fields = model.flds.map((field) => field.name);
+  const cards = (() => {
+    const notes = executeQueryAll<
+      { id: number; modelId: string; tags: string; fields: string }
+    >(db, "SELECT id, cast(mid as text) as modelId, tags, flds as fields FROM notes");
 
-  const notes = (() => {
-    const notes = executeQueryAll<{ id: number; mid: number; flds: string }>(db, "SELECT id, mid, flds FROM notes")
+    return notes.map((note) => {
+      const modelForCard = models[note.modelId]
+      assertTruthy(modelForCard, `Model ${note.modelId} not found`)
 
-    return notes.map((note) => note.flds.split("\x1F"))
-  })()
+      const keys = modelForCard.flds.map((fld) => fld.name)
+      const values = note.fields.split("\x1F")
+      const valuesMap = Object.fromEntries(keys.map((key, index) => [key, values[index] || null]))
 
-  assert(
-    fields.length === notes[0]!.length,
-    "Fields and note data length mismatch",
-  );
+      return ({
+        values: valuesMap,
+        tags: note.tags.split("\x1F"),
+        templates: modelForCard.tmpls,
+      })
+    });
+  })();
 
-  const cards = notes.map((noteFields) =>
-    Object.fromEntries(fields.map((field, index) => [field, noteFields[index]]))
-  );
-
-  return { cards, templates: model.tmpls, notesTypes: null };
+  return { cards, notesTypes: null };
 }

@@ -23,6 +23,9 @@ importers:
       '@zip-js/zip-js':
         specifier: npm:@jsr/zip-js__zip-js@^2.7.57
         version: '@jsr/zip-js__zip-js@2.7.57'
+      long:
+        specifier: ^5.3.1
+        version: 5.3.1
       mime:
         specifier: ^4.0.6
         version: 4.0.6

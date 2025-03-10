@@ -52,7 +52,7 @@ function flattenOptionalSections(templateString: string, card: { [key: string]: 
         "g",
       );
 
-      if (!card[section]) {
+      if (section && !card[section]) {
         renderedString = renderedString.replace(regex, "");
         continue;
       }

@@ -11,11 +11,11 @@ export async function getAnkiDataFromBlob(file: Blob) {
   const db = new SQL.Database(ankiDb.array);
 
   if (ankiDb.type === "21b") {
-    const { cards, templates } = getDataFromAnki21b(db);
-    return { cards, templates, files };
+    const { cards } = getDataFromAnki21b(db);
+    return { cards, files };
   }
 
-  const { cards, templates } = getDataFromAnki2(db);
-  return { cards, templates, files };
+  const { cards } = getDataFromAnki2(db);
+  return { cards, files };
 }
 
