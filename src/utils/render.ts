@@ -1,4 +1,4 @@
-import katex from 'katex';
+import katex from "katex";
 
 type Variables = { [key: string]: string | null };
 
@@ -12,12 +12,12 @@ export function getRenderedCardString(
   },
 ) {
   let renderedString = templateString;
-  
+
   renderedString = flattenOptionalSections(templateString, variables);
-  
+
   renderedString = renderedString.replace(/\{\{(.*?)\}\}/g, (_match, p1) => {
     const field = variables[p1];
-    return field ?? '';
+    return field ?? "";
   });
 
   renderedString = replaceTemplatingSyntax(renderedString);
@@ -32,38 +32,40 @@ export function getRenderedCardString(
 /**
  * source strings are replaced with blob URLs
  */
-function replaceMediaFiles(renderedString: string, mediaFiles: Map<string, string>) {
+function replaceMediaFiles(
+  renderedString: string,
+  mediaFiles: Map<string, string>,
+) {
   return renderedString
     .replace(/="([^"]+?\.[^\."]+)"/g, (match, filename) => {
       const url = mediaFiles.get(filename);
       return url ? `="${url}"` : match;
-    })
+    });
 }
 
 function replaceLatex(renderedString: string) {
-  const replaceLatex = (_match: string, latex: string) => {
-    return katex.renderToString(latex, {
-      throwOnError: false,
-    });
-  }
+  const replaceLatex = (match: string, latex: string) => {
+    try {
+      return katex.renderToString(latex);
+    } catch (error) {
+      console.error(new Error("could not parse latex for: " + latex, { cause: error }));
+      return match;
+    }
+  };
 
   return renderedString
     .replace(/\[\$\$?\](.+?)\[\/\$\$?\]/g, replaceLatex)
-    .replace(/\[latex\](.+?)\[\/latex\]/g, replaceLatex)
+    .replace(/\[latex\](.+?)\[\/latex\]/g, replaceLatex);
 }
+
 function replaceTemplatingSyntax(renderedString: string) {
   return renderedString
     .replace(/\[sound:(.+?)\]/g, (_match, filename) => {
-      return `<audio src="${filename}" controls />`
+      return `<audio src="${filename}" controls />`;
     })
     .replace(/(\w+)\[(\w+)\]/g, (_match, rubyBase, rubyText) => {
-      return `<ruby>${rubyBase}<rt>${rubyText}</rt></ruby>`
-    })
-    .replace(/\[\$\](.+?)\[\/\$\]/g, (_match, latex) => {
-      return katex.renderToString(latex, {
-        throwOnError: false,
-      });
-    })
+      return `<ruby>${rubyBase}<rt>${rubyText}</rt></ruby>`;
+    });
 }
 
 /**
