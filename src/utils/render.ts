@@ -18,6 +18,8 @@ export function getRenderedCardString(
     return field ?? '';
   });
 
+  renderedString = replaceTemplatingSyntax(renderedString);
+
   renderedString = replaceMediaFiles(renderedString, mediaFiles);
 
   return renderedString;
@@ -27,10 +29,21 @@ export function getRenderedCardString(
  * source strings are replaced with blob URLs
  */
 function replaceMediaFiles(renderedString: string, mediaFiles: Map<string, string>) {
-  return renderedString.replace(/="([^"]+?\.[^\."]+)"/g, (match, filename) => {
-    const url = mediaFiles.get(filename);
-    return url ? `="${url}"` : match;
-  });
+  return renderedString
+    .replace(/="([^"]+?\.[^\."]+)"/g, (match, filename) => {
+      const url = mediaFiles.get(filename);
+      return url ? `="${url}"` : match;
+    })
+}
+
+function replaceTemplatingSyntax(renderedString: string) {
+  return renderedString
+    .replace(/\[sound:(.+?)\]/g, (_match, filename) => {
+      return `<audio src="${filename}" controls />`
+    })
+    .replace(/(\w+)\[(\w+)\]/g, (_match, rubyBase, rubyText) => {
+      return `<ruby>${rubyBase}<rt>${rubyText}</rt></ruby>`
+    })
 }
 
 /**
