@@ -1,3 +1,5 @@
+import katex from 'katex';
+
 type Variables = { [key: string]: string | null };
 
 // security risk - figure out how to do this safely
@@ -20,6 +22,8 @@ export function getRenderedCardString(
 
   renderedString = replaceTemplatingSyntax(renderedString);
 
+  renderedString = replaceLatex(renderedString);
+
   renderedString = replaceMediaFiles(renderedString, mediaFiles);
 
   return renderedString;
@@ -36,6 +40,17 @@ function replaceMediaFiles(renderedString: string, mediaFiles: Map<string, strin
     })
 }
 
+function replaceLatex(renderedString: string) {
+  const replaceLatex = (_match: string, latex: string) => {
+    return katex.renderToString(latex, {
+      throwOnError: false,
+    });
+  }
+
+  return renderedString
+    .replace(/\[\$\$?\](.+?)\[\/\$\$?\]/g, replaceLatex)
+    .replace(/\[latex\](.+?)\[\/latex\]/g, replaceLatex)
+}
 function replaceTemplatingSyntax(renderedString: string) {
   return renderedString
     .replace(/\[sound:(.+?)\]/g, (_match, filename) => {
@@ -43,6 +58,11 @@ function replaceTemplatingSyntax(renderedString: string) {
     })
     .replace(/(\w+)\[(\w+)\]/g, (_match, rubyBase, rubyText) => {
       return `<ruby>${rubyBase}<rt>${rubyText}</rt></ruby>`
+    })
+    .replace(/\[\$\](.+?)\[\/\$\]/g, (_match, latex) => {
+      return katex.renderToString(latex, {
+        throwOnError: false,
+      });
     })
 }
 
