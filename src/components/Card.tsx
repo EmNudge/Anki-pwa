@@ -13,9 +13,9 @@ export function Card(props: {
 }) {
   css`
     .card {
-      border: 1px solid #282828;
-      background: #202020;
-      box-shadow: -1px 2px 5px #171717;
+      border: 1px solid var(--border-color);
+      background: var(--surface-color-01, yellow);
+      box-shadow: var(--box-shadow);
       border-radius: 4px;
 
       display: grid;
@@ -39,7 +39,6 @@ export function Card(props: {
     h1 {
       margin: 0;
       font-weight: 400;
-      color: #eee;
       font-size: 1.5rem;
     }
 
