@@ -23,12 +23,15 @@ export function Card(props: {
       justify-items: stretch;
       gap: 1rem;
 
-      min-width: 600px;
-      min-height: 300px;
+      /* shrink width for smaller screens */
+      width: 800px;
+      
+      min-height: 500px;
     }
 
     .card-content :global(img) {
-      height: 420px;
+      height: 200px;
+      margin: 0 auto;
     }
 
     .card-content :global(hr) {
@@ -46,6 +49,7 @@ export function Card(props: {
       display: flex;
       justify-content: center;
       gap: 1rem;
+      flex-wrap: wrap;
 
       button {
         display: flex;

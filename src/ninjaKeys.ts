@@ -1,4 +1,4 @@
-import { cardsSig, setBlob } from "./stores";
+import { ankiCachePromise, cardsSig, setBlob } from "./stores";
 import { setSelectedCardSig } from "./stores";
 import { templatesSig } from "./stores";
 import { createEffect } from "solid-js";
@@ -20,9 +20,10 @@ function addCommandsToCommandPalette() {
       handler: () => {
         const inputEl = document.createElement("input");
         inputEl.type = "file";
-        inputEl.addEventListener("change", (e) => {
+        inputEl.addEventListener("change", async (e) => {
           const file = (e.target as HTMLInputElement).files?.[0];
           if (file) {
+            await ankiCachePromise.then(cache => cache.put("anki-deck", new Response(file)));
             setBlob(file);
           }
         });
