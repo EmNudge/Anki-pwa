@@ -47,6 +47,21 @@ function addCommandsToCommandPalette() {
         return { keepOpen: true };
       },
     },
+    {
+      id: "toggle-theme",
+      title: "Toggle Theme",
+      hotkey: "ctrl+T",
+      handler: () => {
+        const currentTheme = document.documentElement.getAttribute("data-theme");
+        const newTheme = currentTheme === "light" ? "dark" : "light";
+        if (newTheme === "dark") {
+          ninja.classList.add("dark");
+        } else {
+          ninja.classList.remove("dark");
+        }
+        document.documentElement.setAttribute("data-theme", newTheme);
+      },
+    },
     ...cardsSig().map((_card, index) => ({
       id: `Card ${index + 1}`,
       title: `Card ${index + 1}`,
