@@ -22,7 +22,7 @@ export const confSchema = z.object({
 });
 
 export const modelSchema = z.record(z.object({
-  id: z.number(),
+  id: z.union([z.number(), z.string()]),
   css: z.string(),
   latexPre: z.string(),
   latexPost: z.string(),
