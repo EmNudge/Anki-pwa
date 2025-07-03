@@ -1,6 +1,7 @@
-import { JSX } from "solid-js";
+import { JSX, onCleanup } from "solid-js";
 import "solid-styled";
 import { css } from "solid-styled";
+import { playClickSoundBasic, playClickSoundMelodic } from "../utils/sound";
 
 export type Answer = "again" | "hard" | "good" | "easy";
 
@@ -25,7 +26,7 @@ export function Card(props: {
 
       /* shrink width for smaller screens */
       width: 800px;
-      
+
       min-height: 500px;
     }
 
@@ -62,6 +63,35 @@ export function Card(props: {
     }
   `;
 
+  function handleKeyDown(e: KeyboardEvent) {
+    if (props.activeSide === "front") {
+      if (e.key === " ") {
+        playClickSoundBasic();
+        props.onReveal();
+      }
+      return;
+    }
+
+    if (e.key === "e") {
+      playClickSoundMelodic();
+      props.onChooseAnswer("easy");
+    } else if (e.key === "h") {
+      playClickSoundMelodic();
+      props.onChooseAnswer("hard");
+    } else if (e.key === "g") {
+      playClickSoundMelodic();
+      props.onChooseAnswer("good");
+    } else if (e.key === "a") {
+      playClickSoundMelodic();
+      props.onChooseAnswer("again");
+    }
+  }
+
+  document.addEventListener("keydown", handleKeyDown);
+  onCleanup(() => {
+    document.removeEventListener("keydown", handleKeyDown);
+  });
+
   return (
     <div class="card">
       <div class="card-content">
@@ -69,22 +99,49 @@ export function Card(props: {
       </div>
 
       {props.activeSide === "front" ? (
-        <button onClick={props.onReveal}> Reveal </button>
+        <button
+          onClick={() => {
+            playClickSoundBasic();
+            props.onReveal();
+          }}
+        >
+          Reveal
+        </button>
       ) : (
         <div class="button-set">
-          <button onClick={() => props.onChooseAnswer("again")}>
+          <button
+            onClick={() => {
+              playClickSoundMelodic();
+              props.onChooseAnswer("again");
+            }}
+          >
             <span class="time">&lt;1m</span>
             <span class="answer">Again</span>
           </button>
-          <button onClick={() => props.onChooseAnswer("hard")}>
+          <button
+            onClick={() => {
+              playClickSoundMelodic();
+              props.onChooseAnswer("hard");
+            }}
+          >
             <span class="time">&lt;6m</span>
             <span class="answer">Hard</span>
           </button>
-          <button onClick={() => props.onChooseAnswer("good")}>
+          <button
+            onClick={() => {
+              playClickSoundMelodic();
+              props.onChooseAnswer("good");
+            }}
+          >
             <span class="time">&lt;10m</span>
             <span class="answer">Good</span>
           </button>
-          <button onClick={() => props.onChooseAnswer("easy")}>
+          <button
+            onClick={() => {
+              playClickSoundMelodic();
+              props.onChooseAnswer("easy");
+            }}
+          >
             <span class="time">&lt;5d</span>
             <span class="answer">Easy</span>
           </button>

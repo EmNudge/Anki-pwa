@@ -4,6 +4,7 @@ import { templatesSig } from "./stores";
 import { createEffect } from "solid-js";
 import { setSelectedTemplateSig } from "./stores";
 import { assertTruthy } from "./utils/assert";
+import { soundEffectsEnabledSig, toggleSoundEffects } from "./stores";
 import "ninja-keys";
 
 function addCommandsToCommandPalette() {
@@ -33,7 +34,7 @@ function addCommandsToCommandPalette() {
     {
       id: "next-card",
       title: "Next Card",
-      hotkey: "ctrl+N",
+      hotkey: ">",
       handler: () => {
         setSelectedCardSig((prevCard) => prevCard + 1);
       },
@@ -61,6 +62,14 @@ function addCommandsToCommandPalette() {
           ninja.classList.remove("dark");
         }
         document.documentElement.setAttribute("data-theme", newTheme);
+      },
+    },
+    {
+      id: "toggle-sound-effects",
+      title: `${soundEffectsEnabledSig() ? "Disable" : "Enable"} Sound Effects`,
+      hotkey: "ctrl+E",
+      handler: () => {
+        toggleSoundEffects();
       },
     },
     ...cardsSig().map((_card, index) => ({
