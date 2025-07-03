@@ -38,3 +38,13 @@ export const templatesSig = createMemo(() => {
 export const mediaFilesSig = createMemo(() =>
   ankiDataSig()?.files ?? new Map<string, string>()
 );
+
+export const [soundEffectsEnabledSig, setSoundEffectsEnabledSig] = createSignal(
+  localStorage.getItem("soundEffectsEnabled") === "true"
+);
+
+export function toggleSoundEffects() {
+  const newValue = !soundEffectsEnabledSig();
+  setSoundEffectsEnabledSig(newValue);
+  localStorage.setItem("soundEffectsEnabled", newValue.toString());
+}
