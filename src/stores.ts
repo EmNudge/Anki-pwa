@@ -5,8 +5,14 @@ import {
 } from "solid-js";
 import { getAnkiDataFromBlob } from "./ankiParser";
 
+export const [deckInfoSig, setDeckInfoSig] = createSignal<{
+  name: string;
+  cardCount: number;
+  templateCount: number;
+} | null>(null);
+
 export const ankiCachePromise = caches.open("anki-cache");
-export const [blob, setBlob] = createSignal<Blob | null>(null);
+export const [blobSig, setBlobSig] = createSignal<Blob | null>(null);
 
 ankiCachePromise.then(async (cache) => {
   const response = await cache.match("anki-deck");
@@ -14,12 +20,12 @@ ankiCachePromise.then(async (cache) => {
     return;
   }
 
-  setBlob(await response.blob());
+  setBlobSig(await response.blob());
 });
 
 
-const [ankiDataSig] = createResource(
-  blob,
+export const [ankiDataSig] = createResource(
+  blobSig,
   (newBlob) => getAnkiDataFromBlob(newBlob),
 );
 

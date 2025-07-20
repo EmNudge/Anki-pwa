@@ -7,13 +7,16 @@ import { FilePicker } from "./components/FilePicker";
 import {
   ankiCachePromise,
   cardsSig,
+  deckInfoSig,
   mediaFilesSig,
   selectedCardSig,
   selectedTemplateSig,
-  setBlob,
+  setBlobSig,
+  setDeckInfoSig,
   setSelectedCardSig,
   templatesSig,
 } from "./stores";
+import { Modal } from "./components/Modal";
 
 function App() {
   css`
@@ -36,7 +39,7 @@ function App() {
       text-align: right;
       display: inline-block;
       opacity: 0.5;
-      
+
       button {
         padding: 0.5rem;
         border-radius: 0.25rem;
@@ -70,8 +73,22 @@ function App() {
     return { frontSideHtml, backSideHtml };
   });
 
+  console.log("App rendering, deckInfoSig:", deckInfoSig());
+
   return (
     <main>
+      <Modal
+        isOpen={!!deckInfoSig()}
+        onClose={() => setDeckInfoSig(null)}
+        title="Deck Info"
+      >
+        <div>
+          <h3>{deckInfoSig()?.name}</h3>
+          <p>Card Count: {deckInfoSig()?.cardCount}</p>
+          <p>Template Count: {deckInfoSig()?.templateCount}</p>
+        </div>
+      </Modal>
+
       <div>
         {(() => {
           const card = renderedCard();
@@ -102,7 +119,7 @@ function App() {
             const cache = await ankiCachePromise;
             await cache.put("anki-deck", new Response(file));
 
-            setBlob(file);
+            setBlobSig(file);
           }}
         />
       )}

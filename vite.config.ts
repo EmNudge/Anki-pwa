@@ -8,9 +8,9 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   optimizeDeps: {
     exclude: ['@bokuweb/zstd-wasm'],
-    esbuildOptions: {
-      target: 'es2020',
-    },
+  },
+  build: {
+    target: 'es2020',
   },
   resolve: {
     alias: {
