@@ -4,8 +4,15 @@ import { join } from "path";
 import initSqlJs from "sql.js";
 import { getDataFromAnki2 } from "../anki2";
 import { getDataFromAnki21b } from "../anki21b";
-import { BlobReader, ZipReader, BlobWriter } from "@zip-js/zip-js";
+import { BlobReader, ZipReader, BlobWriter, Entry, FileEntry } from "@zip-js/zip-js";
 import path from "path";
+
+/**
+ * Type guard to check if an Entry is a FileEntry (has getData method)
+ */
+function isFileEntry(entry: Entry): entry is FileEntry {
+  return !entry.directory;
+}
 
 // Mock the WASM dependencies to avoid loading issues in tests
 vi.mock("../index", () => ({
@@ -30,7 +37,11 @@ async function parseAnkiFile(filePath: string) {
     throw new Error("No collection file found in .apkg");
   }
 
-  const collectionBlob = await collectionEntry.getData!(new BlobWriter());
+  if (!isFileEntry(collectionEntry)) {
+    throw new Error("collection entry is not a file");
+  }
+
+  const collectionBlob = await collectionEntry.getData(new BlobWriter());
   const collectionBuffer = new Uint8Array(await collectionBlob.arrayBuffer());
 
   // Initialize SQL.js
