@@ -63,8 +63,9 @@ export function toggleScheduler() {
   setCurrentReviewCardSig(null);
 }
 
-export const [schedulerSettingsSig, setSchedulerSettingsSig] =
-  createSignal<SchedulerSettings>(DEFAULT_SCHEDULER_SETTINGS);
+export const [schedulerSettingsSig, setSchedulerSettingsSig] = createSignal<SchedulerSettings>(
+  DEFAULT_SCHEDULER_SETTINGS,
+);
 
 export const [reviewQueueSig, setReviewQueueSig] = createSignal<ReviewQueue | null>(null);
 
@@ -118,9 +119,7 @@ export async function initializeReviewQueue() {
  */
 export function moveToNextReviewCard() {
   const dueCards = dueCardsSig();
-  const currentIndex = dueCards.findIndex(
-    (card) => card.cardId === currentReviewCardSig()?.cardId,
-  );
+  const currentIndex = dueCards.findIndex((card) => card.cardId === currentReviewCardSig()?.cardId);
 
   if (currentIndex < dueCards.length - 1) {
     setCurrentReviewCardSig(dueCards[currentIndex + 1] ?? null);

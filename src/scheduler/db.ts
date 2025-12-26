@@ -202,8 +202,7 @@ export class ReviewDB {
       const store = transaction.objectStore("settings");
       const request = store.get(deckId);
 
-      request.onsuccess = () =>
-        resolve(request.result?.settings || DEFAULT_SCHEDULER_SETTINGS);
+      request.onsuccess = () => resolve(request.result?.settings || DEFAULT_SCHEDULER_SETTINGS);
       request.onerror = () => reject(request.error);
     });
   }
