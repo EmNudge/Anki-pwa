@@ -6,7 +6,10 @@ import { assertTruthy } from "../utils/assert";
 import mime from "mime";
 import { decompressZstd } from "../utils/zstd";
 
-export async function getAnkiDataFromZip(file: Blob) {
+export async function getAnkiDataFromZip(file: Blob): Promise<{
+  ankiDb: AnkiDb;
+  files: Map<string, string>
+}> {
   const zipFileReader = new BlobReader(file);
   const zipReader = new ZipReader(zipFileReader);
   const entries = await zipReader.getEntries();

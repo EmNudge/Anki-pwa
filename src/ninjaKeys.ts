@@ -1,4 +1,4 @@
-import { ankiCachePromise, cardsSig, setBlob } from "./stores";
+import { ankiCachePromise, ankiDataSig, cardsSig, setBlobSig, setDeckInfoSig } from "./stores";
 import { setSelectedCardSig } from "./stores";
 import { templatesSig } from "./stores";
 import { createEffect } from "solid-js";
@@ -13,6 +13,9 @@ function addCommandsToCommandPalette() {
 
   const templates = templatesSig();
 
+  const ankiData = ankiDataSig();
+  console.log("addCommandsToCommandPalette called, ankiData:", ankiData);
+
   ninja.data = [
     {
       id: "upload-file",
@@ -24,13 +27,40 @@ function addCommandsToCommandPalette() {
         inputEl.addEventListener("change", async (e) => {
           const file = (e.target as HTMLInputElement).files?.[0];
           if (file) {
-            await ankiCachePromise.then(cache => cache.put("anki-deck", new Response(file)));
-            setBlob(file);
+            await ankiCachePromise.then((cache) =>
+              cache.put("anki-deck", new Response(file))
+            );
+            setBlobSig(file);
           }
         });
         inputEl.click();
       },
     },
+    ...(ankiData
+      ? [{
+        id: "deck-info",
+        title: "Deck Info",
+        hotkey: "ctrl+I",
+        handler: () => {
+          console.log("deck-info handler called!");
+          // Count unique templates across all cards
+          const uniqueTemplates = new Set<string>();
+          ankiData.cards.forEach(card => {
+            card.templates.forEach(template => {
+              uniqueTemplates.add(template.name);
+            });
+          });
+
+          const deckInfo = {
+            name: ankiData.files.get("info.txt") ?? "Unknown",
+            cardCount: ankiData.cards.length,
+            templateCount: uniqueTemplates.size,
+          };
+          console.log("Setting deckInfoSig to:", deckInfo);
+          setDeckInfoSig(deckInfo);
+        },
+      }]
+      : []),
     {
       id: "next-card",
       title: "Next Card",
@@ -54,7 +84,9 @@ function addCommandsToCommandPalette() {
       title: "Toggle Theme",
       hotkey: "ctrl+T",
       handler: () => {
-        const currentTheme = document.documentElement.getAttribute("data-theme");
+        const currentTheme = document.documentElement.getAttribute(
+          "data-theme",
+        );
         const newTheme = currentTheme === "light" ? "dark" : "light";
         if (newTheme === "dark") {
           ninja.classList.add("dark");
