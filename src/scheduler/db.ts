@@ -2,7 +2,7 @@ import type { CardReviewState, DailyStats, SchedulerSettings, StoredReviewLog } 
 import { DEFAULT_SCHEDULER_SETTINGS } from "./types";
 
 const DB_NAME = "anki-review-db";
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Updated for FSRS support
 
 /**
  * IndexedDB wrapper for persisting review state
@@ -30,12 +30,45 @@ export class ReviewDB {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
+        const transaction = (event.target as IDBOpenDBRequest).transaction!;
+        const oldVersion = event.oldVersion;
 
         // Store for card review states
         if (!db.objectStoreNames.contains("cards")) {
           const cardStore = db.createObjectStore("cards", { keyPath: "cardId" });
           cardStore.createIndex("deckId", "deckId", { unique: false });
-          cardStore.createIndex("due", "sm2State.due", { unique: false });
+          cardStore.createIndex("algorithm", "algorithm", { unique: false });
+        } else if (oldVersion < 2) {
+          // Migration from version 1 to 2: Update card structure
+          const cardStore = transaction.objectStore("cards");
+
+          // Remove old due index if it exists
+          if (cardStore.indexNames.contains("due")) {
+            cardStore.deleteIndex("due");
+          }
+
+          // Add new algorithm index
+          if (!cardStore.indexNames.contains("algorithm")) {
+            cardStore.createIndex("algorithm", "algorithm", { unique: false });
+          }
+
+          // Migrate existing cards from sm2State to cardState
+          const getAllRequest = cardStore.getAll();
+          getAllRequest.onsuccess = () => {
+            const cards = getAllRequest.result;
+            cards.forEach((card: CardReviewState & { sm2State?: unknown }) => {
+              if (card.sm2State && !card.cardState) {
+                // Migrate SM2 cards to new format
+                const migratedCard: CardReviewState = {
+                  ...card,
+                  algorithm: "sm2",
+                  cardState: card.sm2State,
+                };
+                delete (migratedCard as CardReviewState & { sm2State?: unknown }).sm2State;
+                cardStore.put(migratedCard);
+              }
+            });
+          };
         }
 
         // Store for review logs

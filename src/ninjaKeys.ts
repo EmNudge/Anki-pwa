@@ -9,6 +9,7 @@ import {
   soundEffectsEnabledSig,
   toggleScheduler,
   toggleSoundEffects,
+  setSchedulerSettingsModalOpenSig,
 } from "./stores";
 import "ninja-keys";
 
@@ -109,10 +110,18 @@ function addCommandsToCommandPalette() {
     },
     {
       id: "toggle-scheduler",
-      title: `${schedulerEnabledSig() ? "Disable" : "Enable"} SM-2 Scheduler`,
+      title: `${schedulerEnabledSig() ? "Disable" : "Enable"} Scheduler`,
       hotkey: "ctrl+R",
       handler: () => {
         toggleScheduler();
+      },
+    },
+    {
+      id: "scheduler-settings",
+      title: "Scheduler Settings",
+      hotkey: "ctrl+,",
+      handler: () => {
+        setSchedulerSettingsModalOpenSig(true);
       },
     },
     ...cardsSig().map((_card, index) => ({

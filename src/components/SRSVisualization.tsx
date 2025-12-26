@@ -1,6 +1,5 @@
 import { Show, createMemo, createSignal } from "solid-js";
 import { css } from "solid-styled";
-import { Card as SM2Card } from "@open-spaced-repetition/sm-2";
 import {
   currentReviewCardSig,
   dueCardsSig,
@@ -205,39 +204,24 @@ export function SRSVisualization() {
     };
   });
 
-  // Parse SM-2 state from current card
+  // Get display info from current card
   const cardState = createMemo(() => {
     const card = currentCard();
-    if (!card) return null;
+    const q = queue();
+    if (!card || !q) return null;
 
     try {
-      const sm2Card = SM2Card.fromJSON(card.reviewState.sm2State);
+      const displayInfo = q.getCardDisplayInfo(card);
       return {
-        easeFactor: sm2Card.EF ?? 2.5,
-        interval: sm2Card.I ?? 0,
-        repetitions: sm2Card.n ?? 0,
-        due: sm2Card.due ?? new Date(),
+        ...displayInfo,
         isNew: card.isNew,
+        algorithm: card.reviewState.algorithm,
       };
     } catch (error) {
-      console.error("Error parsing card state:", error);
+      console.error("Error getting card display info:", error);
       return null;
     }
   });
-
-  // Format due date
-  const formatDueDate = (date: Date) => {
-    const now = new Date();
-    const diffMs = date.getTime() - now.getTime();
-    const diffMinutes = Math.floor(diffMs / 1000 / 60);
-    const diffHours = Math.floor(diffMinutes / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMinutes < 0) return "Now";
-    if (diffMinutes < 60) return `${diffMinutes}m`;
-    if (diffHours < 24) return `${diffHours}h`;
-    return `${diffDays}d`;
-  };
 
   return (
     <div class="srs-container">
@@ -330,28 +314,43 @@ export function SRSVisualization() {
           <Show when={cardState()}>
             {(state) => (
               <div class="srs-section">
-                <div class="section-title">Current Card State</div>
+                <div class="section-title">
+                  Current Card State ({state().algorithm?.toUpperCase() || "SM2"})
+                </div>
                 <div class="card-info-grid">
                   <div class="info-item">
                     <div class="info-label">Status</div>
                     <div class="info-value">{state().isNew ? "New" : "Review"}</div>
                   </div>
                   <div class="info-item">
-                    <div class="info-label">Due In</div>
-                    <div class="info-value">{formatDueDate(state().due)}</div>
-                  </div>
-                  <div class="info-item">
-                    <div class="info-label">Ease Factor</div>
-                    <div class="info-value">{(state().easeFactor || 2.5).toFixed(2)}</div>
-                  </div>
-                  <div class="info-item">
-                    <div class="info-label">Interval</div>
-                    <div class="info-value">{(state().interval || 0).toFixed(1)}d</div>
-                  </div>
-                  <div class="info-item">
                     <div class="info-label">Repetitions</div>
                     <div class="info-value">{state().repetitions || 0}</div>
                   </div>
+
+                  {/* SM2-specific fields */}
+                  <Show when={state().algorithm === "sm2"}>
+                    <div class="info-item">
+                      <div class="info-label">Ease Factor</div>
+                      <div class="info-value">{(state().ease || 2.5).toFixed(2)}</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="info-label">Interval</div>
+                      <div class="info-value">{(state().interval || 0).toFixed(1)}d</div>
+                    </div>
+                  </Show>
+
+                  {/* FSRS-specific fields */}
+                  <Show when={state().algorithm === "fsrs"}>
+                    <div class="info-item">
+                      <div class="info-label">Stability</div>
+                      <div class="info-value">{(state().stability || 0).toFixed(2)}d</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="info-label">Difficulty</div>
+                      <div class="info-value">{(state().difficulty || 0).toFixed(2)}</div>
+                    </div>
+                  </Show>
+
                   <div class="info-item">
                     <div class="info-label">Card ID</div>
                     <div class="info-value" style={{ "font-size": "0.7rem", opacity: 0.5 }}>
