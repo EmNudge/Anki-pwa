@@ -27,6 +27,8 @@ import {
 import { Modal } from "./components/Modal";
 import { SRSVisualization } from "./components/SRSVisualization";
 import { SchedulerSettingsModal } from "./components/SchedulerSettings";
+import { CommandPalette } from "./components/CommandPalette";
+import { commandPaletteAPI } from "./commandPaletteStore";
 
 function App() {
   // eslint-disable-next-line no-unused-expressions
@@ -204,13 +206,13 @@ function App() {
       <div class="keyboard-hint">
         <button
           onClick={() => {
-            const ninja = document.querySelector("ninja-keys");
-            ninja?.open();
+            commandPaletteAPI.open();
           }}
         >
           <kbd>Cmd</kbd> + <kbd>K</kbd>
         </button>
       </div>
+      <CommandPalette />
     </main>
   );
 }

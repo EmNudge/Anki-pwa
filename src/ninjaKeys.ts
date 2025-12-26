@@ -3,7 +3,6 @@ import { setSelectedCardSig } from "./stores";
 import { templatesSig } from "./stores";
 import { createEffect, createRoot } from "solid-js";
 import { setSelectedTemplateSig } from "./stores";
-import { assertTruthy } from "./utils/assert";
 import {
   schedulerEnabledSig,
   soundEffectsEnabledSig,
@@ -11,21 +10,18 @@ import {
   toggleSoundEffects,
   setSchedulerSettingsModalOpenSig,
 } from "./stores";
-import "ninja-keys";
+import { commandPaletteAPI, type Command } from "./commandPaletteStore";
 
 function addCommandsToCommandPalette() {
-  const ninja = document.querySelector("ninja-keys");
-  assertTruthy(ninja, "ninja-keys not found");
-
   const templates = templatesSig();
-
   const ankiData = ankiDataSig();
   console.log("addCommandsToCommandPalette called, ankiData:", ankiData);
 
-  ninja.data = [
+  const commands: Command[] = [
     {
       id: "upload-file",
       title: "Upload Anki Deck",
+      icon: "📂",
       hotkey: "ctrl+N",
       handler: () => {
         const inputEl = document.createElement("input");
@@ -45,6 +41,7 @@ function addCommandsToCommandPalette() {
           {
             id: "deck-info",
             title: "Deck Info",
+            icon: "ℹ️",
             hotkey: "ctrl+I",
             handler: () => {
               console.log("deck-info handler called!");
@@ -70,6 +67,7 @@ function addCommandsToCommandPalette() {
     {
       id: "next-card",
       title: "Next Card",
+      icon: "→",
       hotkey: ">",
       handler: () => {
         setSelectedCardSig((prevCard) => prevCard + 1);
@@ -78,31 +76,30 @@ function addCommandsToCommandPalette() {
     {
       id: "select-card",
       title: "Select Card",
+      icon: "🃏",
       hotkey: "ctrl+S",
       children: cardsSig().map((_card, index) => `Card ${index + 1}`),
       handler: () => {
-        ninja.open({ parent: "select-card" });
+        commandPaletteAPI.open({ parent: "select-card" });
         return { keepOpen: true };
       },
     },
     {
       id: "toggle-theme",
       title: "Toggle Theme",
+      icon: "🌓",
       hotkey: "ctrl+T",
       handler: () => {
         const currentTheme = document.documentElement.getAttribute("data-theme");
         const newTheme = currentTheme === "light" ? "dark" : "light";
-        if (newTheme === "dark") {
-          ninja.classList.add("dark");
-        } else {
-          ninja.classList.remove("dark");
-        }
         document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
       },
     },
     {
       id: "toggle-sound-effects",
       title: `${soundEffectsEnabledSig() ? "Disable" : "Enable"} Sound Effects`,
+      icon: soundEffectsEnabledSig() ? "🔊" : "🔇",
       hotkey: "ctrl+E",
       handler: () => {
         toggleSoundEffects();
@@ -111,6 +108,7 @@ function addCommandsToCommandPalette() {
     {
       id: "toggle-scheduler",
       title: `${schedulerEnabledSig() ? "Disable" : "Enable"} Scheduler`,
+      icon: schedulerEnabledSig() ? "⏸️" : "▶️",
       hotkey: "ctrl+R",
       handler: () => {
         toggleScheduler();
@@ -119,6 +117,7 @@ function addCommandsToCommandPalette() {
     {
       id: "scheduler-settings",
       title: "Scheduler Settings",
+      icon: "⚙️",
       hotkey: "ctrl+,",
       handler: () => {
         setSchedulerSettingsModalOpenSig(true);
@@ -127,6 +126,7 @@ function addCommandsToCommandPalette() {
     ...cardsSig().map((_card, index) => ({
       id: `Card ${index + 1}`,
       title: `Card ${index + 1}`,
+      icon: "🃏",
       parent: "select-card",
       handler: () => {
         setSelectedCardSig(index);
@@ -137,16 +137,18 @@ function addCommandsToCommandPalette() {
           {
             id: "select-template",
             title: "Select Template",
-            hotkey: "ctrl+T",
+            icon: "📋",
+            hotkey: "ctrl+L",
             children: templates.map((template) => template.name),
             handler: () => {
-              ninja.open({ parent: "select-template" });
+              commandPaletteAPI.open({ parent: "select-template" });
               return { keepOpen: true };
             },
           },
           ...templates.map((template, index) => ({
             id: template.name,
             title: template.name,
+            icon: "📄",
             parent: "select-template",
             handler: () => {
               setSelectedTemplateSig(index);
@@ -155,6 +157,8 @@ function addCommandsToCommandPalette() {
         ]
       : []),
   ];
+
+  commandPaletteAPI.setCommands(commands);
 }
 
 createRoot(() => {

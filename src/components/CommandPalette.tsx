@@ -1,0 +1,429 @@
+import { Show, For, createSignal, createEffect } from "solid-js";
+import { css } from "solid-styled";
+import { commandPaletteOpenSig, commandsSig, setCommandPaletteOpenSig, type Command } from "../commandPaletteStore";
+
+export function CommandPalette() {
+  const [searchQuery, setSearchQuery] = createSignal("");
+  const [selectedIndex, setSelectedIndex] = createSignal(0);
+  const [breadcrumb, setBreadcrumb] = createSignal<string[]>([]);
+
+  let inputRef: HTMLInputElement | undefined;
+
+  // eslint-disable-next-line no-unused-expressions
+  css`
+    .command-palette-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--color-overlay);
+      backdrop-filter: blur(8px);
+      z-index: calc(var(--z-index-modal) + 100);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 20vh;
+      animation: fadeIn var(--duration-fast) var(--ease-out);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .command-palette {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      width: 640px;
+      max-width: 90vw;
+      max-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideDown var(--duration-base) var(--ease-out);
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .command-palette-header {
+      padding: var(--spacing-4);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .command-palette-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2);
+      margin-bottom: var(--spacing-2);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+    }
+
+    .breadcrumb-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-1);
+    }
+
+    .breadcrumb-separator {
+      color: var(--color-text-tertiary);
+    }
+
+    .breadcrumb-back {
+      background: none;
+      border: none;
+      color: var(--color-primary-500);
+      cursor: pointer;
+      padding: var(--spacing-1) var(--spacing-2);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-sm);
+      transition: var(--transition-colors);
+    }
+
+    .breadcrumb-back:hover {
+      background: var(--color-surface-elevated);
+    }
+
+    .command-palette-search {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .command-palette-search-icon {
+      position: absolute;
+      left: var(--spacing-3);
+      color: var(--color-text-tertiary);
+      pointer-events: none;
+    }
+
+    .command-palette-input {
+      width: 100%;
+      padding: var(--spacing-3) var(--spacing-3) var(--spacing-3) var(--spacing-10);
+      border: none;
+      background: transparent;
+      color: var(--color-text-primary);
+      font-size: var(--font-size-base);
+      font-family: var(--font-family-sans);
+      outline: none;
+    }
+
+    .command-palette-input::placeholder {
+      color: var(--color-text-tertiary);
+    }
+
+    .command-palette-results {
+      overflow-y: auto;
+      max-height: 400px;
+    }
+
+    .command-palette-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-3) var(--spacing-4);
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: var(--transition-colors);
+    }
+
+    .command-palette-item:hover {
+      background: var(--color-neutral-100);
+    }
+
+    :root[data-theme="dark"] .command-palette-item:hover {
+      background: var(--color-neutral-200);
+    }
+
+    .command-palette-item.selected {
+      background: var(--color-neutral-200);
+      border-left-color: var(--color-primary-500);
+    }
+
+    :root[data-theme="dark"] .command-palette-item.selected {
+      background: var(--color-neutral-300);
+      border-left-color: var(--color-primary-400);
+    }
+
+    .command-palette-item.selected .command-item-title {
+      color: var(--color-text-primary);
+      font-weight: var(--font-weight-semibold);
+    }
+
+    .command-item-content {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      flex: 1;
+    }
+
+    .command-item-icon {
+      color: var(--color-text-tertiary);
+      font-size: var(--font-size-lg);
+    }
+
+    .command-item-title {
+      color: var(--color-text-primary);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+    }
+
+    .command-item-hotkey {
+      display: flex;
+      gap: var(--spacing-1);
+    }
+
+    .command-item-kbd {
+      padding: var(--spacing-1) var(--spacing-2);
+      background: var(--color-surface-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-xs);
+      font-family: var(--font-family-mono);
+      color: var(--color-text-secondary);
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .command-item-arrow {
+      color: var(--color-text-tertiary);
+      font-size: var(--font-size-sm);
+    }
+
+    .command-palette-empty {
+      padding: var(--spacing-8);
+      text-align: center;
+      color: var(--color-text-tertiary);
+      font-size: var(--font-size-sm);
+    }
+
+    .command-palette-footer {
+      padding: var(--spacing-2) var(--spacing-4);
+      border-top: 1px solid var(--color-border);
+      display: flex;
+      gap: var(--spacing-4);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-tertiary);
+    }
+
+    .footer-hint {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-1);
+    }
+
+    .footer-hint kbd {
+      padding: var(--spacing-0-5) var(--spacing-1);
+      background: var(--color-surface-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-family-mono);
+      font-size: var(--font-size-xs);
+    }
+  `;
+
+  // Get current parent commands
+  const currentParent = () => breadcrumb()[breadcrumb().length - 1];
+
+  // Filter commands based on search and parent
+  const filteredCommands = () => {
+    const commands = commandsSig();
+    const query = searchQuery().toLowerCase();
+    const parent = currentParent();
+
+    return commands.filter((cmd) => {
+      // Filter by parent
+      if (parent) {
+        if (cmd.parent !== parent) return false;
+      } else {
+        if (cmd.parent) return false;
+      }
+
+      // Filter by search query
+      if (query && !cmd.title.toLowerCase().includes(query)) {
+        return false;
+      }
+
+      return true;
+    });
+  };
+
+  // Reset selection when filtered commands change
+  createEffect(() => {
+    filteredCommands();
+    setSelectedIndex(0);
+  });
+
+  // Focus input when opened
+  createEffect(() => {
+    if (commandPaletteOpenSig()) {
+      setTimeout(() => inputRef?.focus(), 0);
+      setSearchQuery("");
+      setBreadcrumb([]);
+      setSelectedIndex(0);
+    }
+  });
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: KeyboardEvent) => {
+    const commands = filteredCommands();
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.min(i + 1, commands.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const selected = commands[selectedIndex()];
+      if (selected) {
+        executeCommand(selected);
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      if (breadcrumb().length > 0) {
+        goBack();
+      } else {
+        closeCommandPalette();
+      }
+    } else if (e.key === "Backspace" && searchQuery() === "" && breadcrumb().length > 0) {
+      e.preventDefault();
+      goBack();
+    }
+  };
+
+  const executeCommand = (cmd: Command) => {
+    if (cmd.children && cmd.children.length > 0) {
+      // Navigate into submenu
+      setBreadcrumb([...breadcrumb(), cmd.id]);
+      setSearchQuery("");
+    } else if (cmd.handler) {
+      // Execute handler
+      const result = cmd.handler();
+      if (!result?.keepOpen) {
+        closeCommandPalette();
+      }
+    }
+  };
+
+  const goBack = () => {
+    setBreadcrumb(breadcrumb().slice(0, -1));
+    setSearchQuery("");
+  };
+
+  const closeCommandPalette = () => {
+    setCommandPaletteOpenSig(false);
+  };
+
+  const renderHotkey = (hotkey?: string) => {
+    if (!hotkey) return null;
+    const keys = hotkey.split("+").map((k) => k.trim());
+    return (
+      <div class="command-item-hotkey">
+        <For each={keys}>
+          {(key) => <kbd class="command-item-kbd">{key}</kbd>}
+        </For>
+      </div>
+    );
+  };
+
+  return (
+    <Show when={commandPaletteOpenSig()}>
+      <div class="command-palette-overlay" onClick={closeCommandPalette}>
+        <div class="command-palette" onClick={(e) => e.stopPropagation()}>
+          <div class="command-palette-header">
+            <Show when={breadcrumb().length > 0}>
+              <div class="command-palette-breadcrumb">
+                <button class="breadcrumb-back" onClick={goBack}>
+                  ← Back
+                </button>
+                <For each={breadcrumb()}>
+                  {(item, index) => (
+                    <>
+                      <Show when={index() > 0}>
+                        <span class="breadcrumb-separator">/</span>
+                      </Show>
+                      <span class="breadcrumb-item">{item}</span>
+                    </>
+                  )}
+                </For>
+              </div>
+            </Show>
+            <div class="command-palette-search">
+              <span class="command-palette-search-icon">🔍</span>
+              <input
+                ref={inputRef}
+                class="command-palette-input"
+                type="text"
+                placeholder="Type a command or search..."
+                value={searchQuery()}
+                onInput={(e) => setSearchQuery(e.currentTarget.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
+          </div>
+
+          <div class="command-palette-results">
+            <Show when={filteredCommands().length > 0} fallback={
+              <div class="command-palette-empty">
+                No commands found
+              </div>
+            }>
+              <For each={filteredCommands()}>
+                {(cmd, index) => (
+                  <div
+                    class={`command-palette-item ${index() === selectedIndex() ? "selected" : ""}`}
+                    onClick={() => executeCommand(cmd)}
+                    onMouseEnter={() => setSelectedIndex(index())}
+                  >
+                    <div class="command-item-content">
+                      <Show when={cmd.icon}>
+                        <span class="command-item-icon">{cmd.icon}</span>
+                      </Show>
+                      <span class="command-item-title">{cmd.title}</span>
+                    </div>
+                    <Show when={cmd.children && cmd.children.length > 0}>
+                      <span class="command-item-arrow">→</span>
+                    </Show>
+                    <Show when={!cmd.children && cmd.hotkey && !currentParent()}>
+                      {renderHotkey(cmd.hotkey)}
+                    </Show>
+                  </div>
+                )}
+              </For>
+            </Show>
+          </div>
+
+          <div class="command-palette-footer">
+            <div class="footer-hint">
+              <kbd>↑↓</kbd> Navigate
+            </div>
+            <div class="footer-hint">
+              <kbd>Enter</kbd> Select
+            </div>
+            <div class="footer-hint">
+              <kbd>Esc</kbd> Close
+            </div>
+          </div>
+        </div>
+      </div>
+    </Show>
+  );
+}
