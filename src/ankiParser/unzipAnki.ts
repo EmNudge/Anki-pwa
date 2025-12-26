@@ -1,10 +1,17 @@
-import { BlobWriter, Entry, TextWriter } from "@zip-js/zip-js";
+import { BlobWriter, Entry, FileEntry, TextWriter } from "@zip-js/zip-js";
 import { ZipReader } from "@zip-js/zip-js";
 import { BlobReader } from "@zip-js/zip-js";
-import { assert, isTruthy } from "../utils/assert";
+import { isTruthy } from "../utils/assert";
 import { assertTruthy } from "../utils/assert";
 import mime from "mime";
 import { decompressZstd } from "../utils/zstd";
+
+/**
+ * Type guard to check if an Entry is a FileEntry (has getData method)
+ */
+function isFileEntry(entry: Entry): entry is FileEntry {
+  return !entry.directory;
+}
 
 export async function getAnkiDataFromZip(file: Blob): Promise<{
   ankiDb: AnkiDb;
@@ -28,7 +35,11 @@ async function getFilesFromEntries(entries: Entry[]): Promise<Map<string, string
   const mediaFileEntry = entries.find((entry) => entry.filename === "media");
   assertTruthy(mediaFileEntry, "media file not found");
 
-  const mediaFileText = await mediaFileEntry.getData!(new TextWriter());
+  if (!isFileEntry(mediaFileEntry)) {
+    throw new Error("media entry is not a file");
+  }
+
+  const mediaFileText = await mediaFileEntry.getData(new TextWriter());
 
   const mediaFile = (() => {
     try {
@@ -48,13 +59,15 @@ async function getFilesFromEntries(entries: Entry[]): Promise<Map<string, string
         return null;
       }
 
-      assert("getData" in entry, "getData method not found");
+      if (!isFileEntry(entry)) {
+        throw new Error(`entry ${entry.filename} is not a file`);
+      }
 
       return { entry, actualFilename };
     })
     .filter(isTruthy)
     .map(async ({ entry, actualFilename }) => {
-      const blob = await entry.getData!(new BlobWriter());
+      const blob = await entry.getData(new BlobWriter());
 
       return {
         data: new Blob([blob], {
@@ -83,9 +96,12 @@ async function getAnkiDbFromEntries(entries: Entry[]): Promise<AnkiDb> {
   })();
 
   assertTruthy(sqliteDbEntry, "sqlite.db not found");
-  assert("getData" in sqliteDbEntry, "getData method not found");
 
-  const sqliteDbBlob = await sqliteDbEntry.getData?.(new BlobWriter());
+  if (!isFileEntry(sqliteDbEntry)) {
+    throw new Error("sqlite.db entry is not a file");
+  }
+
+  const sqliteDbBlob = await sqliteDbEntry.getData(new BlobWriter());
 
   assertTruthy(sqliteDbBlob, "blob not parsed from data");
 

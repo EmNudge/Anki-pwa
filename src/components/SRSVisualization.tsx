@@ -213,9 +213,9 @@ export function SRSVisualization() {
     try {
       const sm2Card = SM2Card.fromJSON(card.reviewState.sm2State);
       return {
-        easeFactor: sm2Card.easeFactor ?? 2.5,
-        interval: sm2Card.interval ?? 0,
-        repetitions: sm2Card.repetitions ?? 0,
+        easeFactor: sm2Card.EF ?? 2.5,
+        interval: sm2Card.I ?? 0,
+        repetitions: sm2Card.n ?? 0,
         due: sm2Card.due ?? new Date(),
         isNew: card.isNew,
       };
