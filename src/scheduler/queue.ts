@@ -142,6 +142,7 @@ export class ReviewQueue {
   getDueCards(queue: ReviewCard[]): ReviewCard[] {
     const now = new Date();
     const dueCards: ReviewCard[] = [];
+    const extraCards: ReviewCard[] = [];
 
     let newCardsShown = this.todayStats.newCount;
     let reviewCardsShown = this.todayStats.reviewCount;
@@ -152,16 +153,20 @@ export class ReviewQueue {
         const isDue = dueDate <= now;
 
         if (card.isNew) {
-          // New cards - respect daily limit
+          // New cards - respect daily limit, but save extras
           if (newCardsShown < this.settings.dailyNewLimit) {
             dueCards.push(card);
             newCardsShown++;
+          } else {
+            extraCards.push(card);
           }
         } else if (isDue) {
-          // Due review cards - respect daily limit
+          // Due review cards - respect daily limit, but save extras
           if (reviewCardsShown < this.settings.dailyReviewLimit) {
             dueCards.push(card);
             reviewCardsShown++;
+          } else {
+            extraCards.push(card);
           }
         } else if (
           this.settings.showAheadOfSchedule &&
@@ -174,6 +179,12 @@ export class ReviewQueue {
         console.error("Error processing card in queue:", error, card);
         // Skip cards that fail to parse
       }
+    }
+
+    // If we've hit the limits but want to continue reviewing, add extra cards
+    // This allows wrapping around and continuous practice
+    if (dueCards.length > 0 && extraCards.length > 0) {
+      dueCards.push(...extraCards);
     }
 
     // Sort: new cards first, then by due date

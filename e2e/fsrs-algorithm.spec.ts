@@ -2,7 +2,7 @@ import { test, expect } from './fixtures';
 
 // Helper to get the scheduler settings modal
 const getSchedulerModal = (page: any) => {
-  return page.locator('.modal-overlay:has(.modal-title:has-text("Scheduler Settings"))');
+  return page.locator('.ds-modal-overlay:has(.ds-modal__title:has-text("Scheduler Settings"))');
 };
 
 test.describe('FSRS Algorithm', () => {
@@ -12,7 +12,7 @@ test.describe('FSRS Algorithm', () => {
       await page.keyboard.press('Control+Comma');
 
       // Wait for modal to appear
-      await expect(page.locator('.modal-title:has-text("Scheduler Settings")')).toBeVisible();
+      await expect(page.locator('.ds-modal__title:has-text("Scheduler Settings")')).toBeVisible();
     });
 
     test('should open scheduler settings via command palette', async ({ loadedDeckPage: page }) => {
@@ -31,7 +31,7 @@ test.describe('FSRS Algorithm', () => {
 
       // Settings modal should appear
       await expect(getSchedulerModal(page)).toBeVisible();
-      await expect(page.locator('.modal-title:has-text("Scheduler Settings")')).toBeVisible();
+      await expect(page.locator('.ds-modal__title:has-text("Scheduler Settings")')).toBeVisible();
     });
 
     test('should close settings modal with Cancel button', async ({ loadedDeckPage: page }) => {
@@ -52,7 +52,7 @@ test.describe('FSRS Algorithm', () => {
       await expect(getSchedulerModal(page)).toBeVisible();
 
       // Click close button
-      await page.click('.close-button');
+      await page.click('.ds-modal__close');
 
       // Modal should close
       await expect(getSchedulerModal(page)).not.toBeVisible();
