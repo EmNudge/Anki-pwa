@@ -1,13 +1,13 @@
-import { Show, For, createSignal, createEffect } from "solid-js";
+import { Show, For, createSignal, createEffect, onCleanup } from "solid-js";
 import { css } from "solid-styled";
-import { commandPaletteOpenSig, commandsSig, setCommandPaletteOpenSig, type Command } from "../commandPaletteStore";
+import { commandPaletteOpenSig, setCommandPaletteOpenSig, type Command } from "../commandPaletteStore";
 
-export function CommandPalette() {
+export function CommandPalette(props: { commands: Command[] }) {
   const [searchQuery, setSearchQuery] = createSignal("");
   const [selectedIndex, setSelectedIndex] = createSignal(0);
   const [breadcrumb, setBreadcrumb] = createSignal<string[]>([]);
 
-  let inputRef: HTMLInputElement | undefined;
+  let [inputRef, setInputRef] = createSignal<HTMLInputElement | undefined>(undefined);
 
   // eslint-disable-next-line no-unused-expressions
   css`
@@ -243,7 +243,7 @@ export function CommandPalette() {
 
   // Filter commands based on search and parent
   const filteredCommands = () => {
-    const commands = commandsSig();
+    const commands = props.commands;
     console.log("filteredCommands called, commands:", commands);
     const query = searchQuery().toLowerCase();
     const parent = currentParent();
@@ -274,7 +274,7 @@ export function CommandPalette() {
   // Focus input when opened
   createEffect(() => {
     if (commandPaletteOpenSig()) {
-      setTimeout(() => inputRef?.focus(), 0);
+      setTimeout(() => inputRef()?.focus(), 0);
       setSearchQuery("");
       setBreadcrumb([]);
       setSelectedIndex(0);
@@ -333,6 +333,58 @@ export function CommandPalette() {
     setCommandPaletteOpenSig(false);
   };
 
+  const matchesHotkey = (e: KeyboardEvent, hotkey: string): boolean => {
+    const parts = hotkey.toLowerCase().split("+").map((s) => s.trim());
+
+    let needsCtrl = false;
+    let needsMeta = false;
+    let needsShift = false;
+    let needsAlt = false;
+    let key = "";
+
+    for (const part of parts) {
+      if (part === "ctrl") needsCtrl = true;
+      else if (part === "cmd" || part === "meta") needsMeta = true;
+      else if (part === "shift") needsShift = true;
+      else if (part === "alt") needsAlt = true;
+      else key = part;
+    }
+
+    return (
+      (needsCtrl ? e.ctrlKey : !e.ctrlKey || needsMeta) &&
+      (needsMeta ? e.metaKey : !e.metaKey || needsCtrl) &&
+      (needsShift ? e.shiftKey : !e.shiftKey) &&
+      (needsAlt ? e.altKey : !e.altKey) &&
+      e.key.toLowerCase() === key
+    );
+  };
+
+  // Global hotkeys for commands based on props.commands
+  createEffect(() => {
+    const keydownListener = (e: KeyboardEvent) => {
+      // Don't trigger if command palette is open or if user is typing
+      if (
+        commandPaletteOpenSig() ||
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      const commands = props.commands;
+      for (const cmd of commands) {
+        if (cmd.hotkey && matchesHotkey(e, cmd.hotkey)) {
+          e.preventDefault();
+          cmd.handler?.();
+          break;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", keydownListener);
+    onCleanup(() => window.removeEventListener("keydown", keydownListener));
+  });
+
   const renderHotkey = (hotkey?: string) => {
     if (!hotkey) return null;
     const keys = hotkey.split("+").map((k) => k.trim());
@@ -370,7 +422,7 @@ export function CommandPalette() {
             <div class="command-palette-search">
               <span class="command-palette-search-icon">🔍</span>
               <input
-                ref={inputRef}
+                ref={setInputRef}
                 class="command-palette-input"
                 type="text"
                 placeholder="Type a command or search..."
