@@ -8,7 +8,11 @@ export function executeQuery<T>(db: Database, query: string, params?: Record<str
   return result;
 }
 
-export function executeQueryAll<T>(db: Database, query: string, params?: Record<string, string>): T[] {
+export function executeQueryAll<T>(
+  db: Database,
+  query: string,
+  params?: Record<string, string>,
+): T[] {
   const stmt = db.prepare(query);
   const result: T[] = [];
   while (stmt.step()) {

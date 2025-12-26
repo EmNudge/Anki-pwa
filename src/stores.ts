@@ -1,8 +1,4 @@
-import {
-  createMemo,
-  createResource,
-  createSignal,
-} from "solid-js";
+import { createMemo, createResource, createSignal } from "solid-js";
 import { getAnkiDataFromBlob } from "./ankiParser";
 
 export const [deckInfoSig, setDeckInfoSig] = createSignal<{
@@ -23,16 +19,12 @@ ankiCachePromise.then(async (cache) => {
   setBlobSig(await response.blob());
 });
 
-
-export const [ankiDataSig] = createResource(
-  blobSig,
-  (newBlob) => getAnkiDataFromBlob(newBlob),
-);
+export const [ankiDataSig] = createResource(blobSig, (newBlob) => getAnkiDataFromBlob(newBlob));
 
 export const [selectedCardSig, setSelectedCardSig] = createSignal(0);
 export const cardsSig = createMemo(() => {
   setSelectedCardSig(0);
-  return ankiDataSig()?.cards ?? []
+  return ankiDataSig()?.cards ?? [];
 });
 
 export const [selectedTemplateSig, setSelectedTemplateSig] = createSignal(0);
@@ -41,12 +33,10 @@ export const templatesSig = createMemo(() => {
   return cardsSig()[selectedCardSig()]?.templates;
 });
 
-export const mediaFilesSig = createMemo(() =>
-  ankiDataSig()?.files ?? new Map<string, string>()
-);
+export const mediaFilesSig = createMemo(() => ankiDataSig()?.files ?? new Map<string, string>());
 
 export const [soundEffectsEnabledSig, setSoundEffectsEnabledSig] = createSignal(
-  localStorage.getItem("soundEffectsEnabled") === "true"
+  localStorage.getItem("soundEffectsEnabled") === "true",
 );
 
 export function toggleSoundEffects() {

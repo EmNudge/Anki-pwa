@@ -1,8 +1,7 @@
 import { css } from "solid-styled";
 
-export function FilePicker(props: {
-  onFileChange: (file: File) => void | Promise<void>;
-}) {
+export function FilePicker(props: { onFileChange: (file: File) => void | Promise<void> }) {
+  // eslint-disable-next-line no-unused-expressions
   css`
     input {
       width: 0px;

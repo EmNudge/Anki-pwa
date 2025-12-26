@@ -12,6 +12,7 @@ export function Card(props: {
   onReveal: () => void;
   activeSide: "front" | "back";
 }) {
+  // eslint-disable-next-line no-unused-expressions
   css`
     .card {
       border: 1px solid var(--border-color);
@@ -94,9 +95,7 @@ export function Card(props: {
 
   return (
     <div class="card">
-      <div class="card-content">
-        {props.activeSide === "front" ? props.front : props.back}
-      </div>
+      <div class="card-content">{props.activeSide === "front" ? props.front : props.back}</div>
 
       {props.activeSide === "front" ? (
         <button

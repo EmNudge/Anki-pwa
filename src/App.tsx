@@ -19,6 +19,7 @@ import {
 import { Modal } from "./components/Modal";
 
 function App() {
+  // eslint-disable-next-line no-unused-expressions
   css`
     main {
       display: grid;
@@ -77,11 +78,7 @@ function App() {
 
   return (
     <main>
-      <Modal
-        isOpen={!!deckInfoSig()}
-        onClose={() => setDeckInfoSig(null)}
-        title="Deck Info"
-      >
+      <Modal isOpen={!!deckInfoSig()} onClose={() => setDeckInfoSig(null)} title="Deck Info">
         <div>
           <h3>{deckInfoSig()?.name}</h3>
           <p>Card Count: {deckInfoSig()?.cardCount}</p>

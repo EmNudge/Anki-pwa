@@ -1,7 +1,7 @@
 import { ankiCachePromise, ankiDataSig, cardsSig, setBlobSig, setDeckInfoSig } from "./stores";
 import { setSelectedCardSig } from "./stores";
 import { templatesSig } from "./stores";
-import { createEffect } from "solid-js";
+import { createEffect, createRoot } from "solid-js";
 import { setSelectedTemplateSig } from "./stores";
 import { assertTruthy } from "./utils/assert";
 import { soundEffectsEnabledSig, toggleSoundEffects } from "./stores";
@@ -27,9 +27,7 @@ function addCommandsToCommandPalette() {
         inputEl.addEventListener("change", async (e) => {
           const file = (e.target as HTMLInputElement).files?.[0];
           if (file) {
-            await ankiCachePromise.then((cache) =>
-              cache.put("anki-deck", new Response(file))
-            );
+            await ankiCachePromise.then((cache) => cache.put("anki-deck", new Response(file)));
             setBlobSig(file);
           }
         });
@@ -37,29 +35,31 @@ function addCommandsToCommandPalette() {
       },
     },
     ...(ankiData
-      ? [{
-        id: "deck-info",
-        title: "Deck Info",
-        hotkey: "ctrl+I",
-        handler: () => {
-          console.log("deck-info handler called!");
-          // Count unique templates across all cards
-          const uniqueTemplates = new Set<string>();
-          ankiData.cards.forEach(card => {
-            card.templates.forEach(template => {
-              uniqueTemplates.add(template.name);
-            });
-          });
+      ? [
+          {
+            id: "deck-info",
+            title: "Deck Info",
+            hotkey: "ctrl+I",
+            handler: () => {
+              console.log("deck-info handler called!");
+              // Count unique templates across all cards
+              const uniqueTemplates = new Set<string>();
+              ankiData.cards.forEach((card) => {
+                card.templates.forEach((template) => {
+                  uniqueTemplates.add(template.name);
+                });
+              });
 
-          const deckInfo = {
-            name: ankiData.files.get("info.txt") ?? "Unknown",
-            cardCount: ankiData.cards.length,
-            templateCount: uniqueTemplates.size,
-          };
-          console.log("Setting deckInfoSig to:", deckInfo);
-          setDeckInfoSig(deckInfo);
-        },
-      }]
+              const deckInfo = {
+                name: ankiData.files.get("info.txt") ?? "Unknown",
+                cardCount: ankiData.cards.length,
+                templateCount: uniqueTemplates.size,
+              };
+              console.log("Setting deckInfoSig to:", deckInfo);
+              setDeckInfoSig(deckInfo);
+            },
+          },
+        ]
       : []),
     {
       id: "next-card",
@@ -84,9 +84,7 @@ function addCommandsToCommandPalette() {
       title: "Toggle Theme",
       hotkey: "ctrl+T",
       handler: () => {
-        const currentTheme = document.documentElement.getAttribute(
-          "data-theme",
-        );
+        const currentTheme = document.documentElement.getAttribute("data-theme");
         const newTheme = currentTheme === "light" ? "dark" : "light";
         if (newTheme === "dark") {
           ninja.classList.add("dark");
@@ -114,27 +112,29 @@ function addCommandsToCommandPalette() {
     })),
     ...(templates
       ? [
-        {
-          id: "select-template",
-          title: "Select Template",
-          hotkey: "ctrl+T",
-          children: templates.map((template) => template.name),
-          handler: () => {
-            ninja.open({ parent: "select-template" });
-            return { keepOpen: true };
+          {
+            id: "select-template",
+            title: "Select Template",
+            hotkey: "ctrl+T",
+            children: templates.map((template) => template.name),
+            handler: () => {
+              ninja.open({ parent: "select-template" });
+              return { keepOpen: true };
+            },
           },
-        },
-        ...templates.map((template, index) => ({
-          id: template.name,
-          title: template.name,
-          parent: "select-template",
-          handler: () => {
-            setSelectedTemplateSig(index);
-          },
-        })),
-      ]
+          ...templates.map((template, index) => ({
+            id: template.name,
+            title: template.name,
+            parent: "select-template",
+            handler: () => {
+              setSelectedTemplateSig(index);
+            },
+          })),
+        ]
       : []),
   ];
 }
 
-createEffect(addCommandsToCommandPalette);
+createRoot(() => {
+  createEffect(addCommandsToCommandPalette);
+});
