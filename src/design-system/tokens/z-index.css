@@ -1,0 +1,11 @@
+/* Z-Index Tokens */
+
+:root {
+  --z-index-base: 0;
+  --z-index-dropdown: 100;
+  --z-index-sticky: 200;
+  --z-index-overlay: 900;
+  --z-index-modal: 1000;
+  --z-index-popover: 1100;
+  --z-index-tooltip: 1200;
+}

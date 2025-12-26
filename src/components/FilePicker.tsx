@@ -12,11 +12,17 @@ export function FilePicker(props: { onFileChange: (file: File) => void | Promise
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      padding: 0.5rem 1rem;
+      gap: var(--spacing-2);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: var(--spacing-2) var(--spacing-4);
       cursor: pointer;
+      transition: var(--transition-colors);
+    }
+
+    .button-like:hover {
+      border-color: var(--color-border-hover);
+      background: var(--color-surface-elevated);
     }
   `;
 
