@@ -11,6 +11,12 @@ export function Card(props: {
   onChooseAnswer: (answer: Answer) => void;
   onReveal: () => void;
   activeSide: "front" | "back";
+  intervals?: {
+    again: string;
+    hard: string;
+    good: string;
+    easy: string;
+  };
 }) {
   // eslint-disable-next-line no-unused-expressions
   css`
@@ -114,7 +120,7 @@ export function Card(props: {
               props.onChooseAnswer("again");
             }}
           >
-            <span class="time">&lt;1m</span>
+            <span class="time">{props.intervals?.again ?? "<1m"}</span>
             <span class="answer">Again</span>
           </button>
           <button
@@ -123,7 +129,7 @@ export function Card(props: {
               props.onChooseAnswer("hard");
             }}
           >
-            <span class="time">&lt;6m</span>
+            <span class="time">{props.intervals?.hard ?? "<6m"}</span>
             <span class="answer">Hard</span>
           </button>
           <button
@@ -132,7 +138,7 @@ export function Card(props: {
               props.onChooseAnswer("good");
             }}
           >
-            <span class="time">&lt;10m</span>
+            <span class="time">{props.intervals?.good ?? "<10m"}</span>
             <span class="answer">Good</span>
           </button>
           <button
@@ -141,7 +147,7 @@ export function Card(props: {
               props.onChooseAnswer("easy");
             }}
           >
-            <span class="time">&lt;5d</span>
+            <span class="time">{props.intervals?.easy ?? "<5d"}</span>
             <span class="answer">Easy</span>
           </button>
         </div>

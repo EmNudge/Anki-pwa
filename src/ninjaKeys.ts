@@ -4,7 +4,12 @@ import { templatesSig } from "./stores";
 import { createEffect, createRoot } from "solid-js";
 import { setSelectedTemplateSig } from "./stores";
 import { assertTruthy } from "./utils/assert";
-import { soundEffectsEnabledSig, toggleSoundEffects } from "./stores";
+import {
+  schedulerEnabledSig,
+  soundEffectsEnabledSig,
+  toggleScheduler,
+  toggleSoundEffects,
+} from "./stores";
 import "ninja-keys";
 
 function addCommandsToCommandPalette() {
@@ -100,6 +105,14 @@ function addCommandsToCommandPalette() {
       hotkey: "ctrl+E",
       handler: () => {
         toggleSoundEffects();
+      },
+    },
+    {
+      id: "toggle-scheduler",
+      title: `${schedulerEnabledSig() ? "Disable" : "Enable"} SM-2 Scheduler`,
+      hotkey: "ctrl+R",
+      handler: () => {
+        toggleScheduler();
       },
     },
     ...cardsSig().map((_card, index) => ({

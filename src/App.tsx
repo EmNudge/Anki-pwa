@@ -1,14 +1,20 @@
 import "./App.css";
-import { createMemo, createSignal } from "solid-js";
+import { createEffect, createMemo, createSignal } from "solid-js";
 import { Card } from "./components/Card";
+import type { Answer } from "./components/Card";
 import { css } from "solid-styled";
 import { getRenderedCardString } from "./utils/render";
 import { FilePicker } from "./components/FilePicker";
 import {
   ankiCachePromise,
   cardsSig,
+  currentReviewCardSig,
   deckInfoSig,
+  initializeReviewQueue,
   mediaFilesSig,
+  moveToNextReviewCard,
+  reviewQueueSig,
+  schedulerEnabledSig,
   selectedCardSig,
   selectedTemplateSig,
   setBlobSig,
@@ -17,6 +23,7 @@ import {
   templatesSig,
 } from "./stores";
 import { Modal } from "./components/Modal";
+import { SRSVisualization } from "./components/SRSVisualization";
 
 function App() {
   // eslint-disable-next-line no-unused-expressions
@@ -49,10 +56,45 @@ function App() {
   `;
 
   const [activeSide, setActiveSide] = createSignal<"front" | "back">("front");
+  const [reviewStartTime, setReviewStartTime] = createSignal<number>(Date.now());
+
+  // Initialize review queue when cards are loaded and scheduler is enabled
+  createEffect(() => {
+    const cards = cardsSig();
+    const templates = templatesSig();
+    const schedulerEnabled = schedulerEnabledSig();
+
+    if (cards.length > 0 && templates && templates.length > 0 && schedulerEnabled) {
+      initializeReviewQueue();
+    }
+  });
+
+  // Get current card based on mode
+  const currentCardData = createMemo(() => {
+    if (schedulerEnabledSig()) {
+      const reviewCard = currentReviewCardSig();
+      if (!reviewCard) return null;
+
+      return {
+        cardIndex: reviewCard.cardIndex,
+        templateIndex: reviewCard.templateIndex,
+        reviewCard,
+      };
+    }
+
+    return {
+      cardIndex: selectedCardSig(),
+      templateIndex: selectedTemplateSig(),
+      reviewCard: null,
+    };
+  });
 
   const renderedCard = createMemo(() => {
-    const template = templatesSig()?.[selectedTemplateSig()];
-    const card = cardsSig()[selectedCardSig()];
+    const data = currentCardData();
+    if (!data) return null;
+
+    const template = cardsSig()[data.cardIndex]?.templates[data.templateIndex];
+    const card = cardsSig()[data.cardIndex];
 
     if (!template || !card) {
       return null;
@@ -74,6 +116,18 @@ function App() {
     return { frontSideHtml, backSideHtml };
   });
 
+  // Calculate intervals for scheduler mode
+  const intervals = createMemo(() => {
+    if (!schedulerEnabledSig()) return undefined;
+
+    const reviewCard = currentReviewCardSig();
+    const queue = reviewQueueSig();
+
+    if (!reviewCard || !queue) return undefined;
+
+    return queue.getNextIntervals(reviewCard);
+  });
+
   console.log("App rendering, deckInfoSig:", deckInfoSig());
 
   return (
@@ -85,6 +139,8 @@ function App() {
           <p>Template Count: {deckInfoSig()?.templateCount}</p>
         </div>
       </Modal>
+
+      {cardsSig().length > 0 && <SRSVisualization />}
 
       <div>
         {(() => {
@@ -98,12 +154,29 @@ function App() {
               front={<div innerHTML={card.frontSideHtml} />}
               back={<div innerHTML={card.backSideHtml} />}
               activeSide={activeSide()}
+              intervals={intervals()}
               onReveal={() => {
                 setActiveSide("back");
+                setReviewStartTime(Date.now());
               }}
-              onChooseAnswer={(_answer) => {
-                setSelectedCardSig((prevCard) => prevCard + 1);
+              onChooseAnswer={async (answer: Answer) => {
+                if (schedulerEnabledSig()) {
+                  // Scheduler mode: process review
+                  const reviewCard = currentReviewCardSig();
+                  const queue = reviewQueueSig();
+
+                  if (reviewCard && queue) {
+                    const reviewTimeMs = Date.now() - reviewStartTime();
+                    await queue.processReview(reviewCard, answer, reviewTimeMs);
+                    moveToNextReviewCard();
+                  }
+                } else {
+                  // Simple mode: just move to next card
+                  setSelectedCardSig((prevCard) => prevCard + 1);
+                }
+
                 setActiveSide("front");
+                setReviewStartTime(Date.now());
               }}
             />
           );
