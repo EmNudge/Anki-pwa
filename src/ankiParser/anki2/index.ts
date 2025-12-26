@@ -13,7 +13,7 @@ export type AnkiDB2Data = {
     templates: z.infer<typeof modelSchema>[string]["tmpls"];
   }[];
   notesTypes: null;
-}
+};
 
 export function getDataFromAnki2(db: Database): AnkiDB2Data {
   const models = (() => {
@@ -31,23 +31,24 @@ export function getDataFromAnki2(db: Database): AnkiDB2Data {
   })();
 
   const cards = (() => {
-    const notes = executeQueryAll<
-      { id: number; modelId: string; tags: string; fields: string }
-    >(db, "SELECT id, cast(mid as text) as modelId, tags, flds as fields FROM notes");
+    const notes = executeQueryAll<{ id: number; modelId: string; tags: string; fields: string }>(
+      db,
+      "SELECT id, cast(mid as text) as modelId, tags, flds as fields FROM notes",
+    );
 
     return notes.map((note) => {
-      const modelForCard = models[note.modelId]
-      assertTruthy(modelForCard, `Model ${note.modelId} not found`)
+      const modelForCard = models[note.modelId];
+      assertTruthy(modelForCard, `Model ${note.modelId} not found`);
 
-      const keys = modelForCard.flds.map((fld) => fld.name)
-      const values = note.fields.split("\x1F")
-      const valuesMap = Object.fromEntries(keys.map((key, index) => [key, values[index] || null]))
+      const keys = modelForCard.flds.map((fld) => fld.name);
+      const values = note.fields.split("\x1F");
+      const valuesMap = Object.fromEntries(keys.map((key, index) => [key, values[index] || null]));
 
-      return ({
+      return {
         values: valuesMap,
         tags: note.tags.split("\x1F"),
         templates: modelForCard.tmpls,
-      })
+      };
     });
   })();
 

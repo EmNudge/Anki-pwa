@@ -4,13 +4,15 @@ type Variables = { [key: string]: string | null };
 
 // security risk - figure out how to do this safely
 // maybe embed in an iframe?
-export function getRenderedCardString(
-  { templateString, variables, mediaFiles }: {
-    templateString: string;
-    variables: Variables;
-    mediaFiles: Map<string, string>;
-  },
-) {
+export function getRenderedCardString({
+  templateString,
+  variables,
+  mediaFiles,
+}: {
+  templateString: string;
+  variables: Variables;
+  mediaFiles: Map<string, string>;
+}) {
   let renderedString = templateString;
 
   renderedString = flattenOptionalSections(templateString, variables);
@@ -32,15 +34,11 @@ export function getRenderedCardString(
 /**
  * source strings are replaced with blob URLs
  */
-function replaceMediaFiles(
-  renderedString: string,
-  mediaFiles: Map<string, string>,
-) {
-  return renderedString
-    .replace(/="([^"]+?\.[^\."]+)"/g, (match, filename) => {
-      const url = mediaFiles.get(filename);
-      return url ? `="${url}"` : match;
-    });
+function replaceMediaFiles(renderedString: string, mediaFiles: Map<string, string>) {
+  return renderedString.replace(/="([^"]+?\.[^."]+)"/g, (match, filename) => {
+    const url = mediaFiles.get(filename);
+    return url ? `="${url}"` : match;
+  });
 }
 
 function replaceLatex(renderedString: string) {
@@ -77,9 +75,7 @@ function flattenOptionalSections(templateString: string, card: Variables) {
   let renderedString = templateString;
 
   const optionalSections = [
-    ...new Set(
-      [...renderedString.matchAll(/\{\{\#(.*?)\}\}/g)].map((match) => match[1]),
-    ),
+    ...new Set([...renderedString.matchAll(/\{\{#(.*?)\}\}/g)].map((match) => match[1])),
   ];
 
   if (optionalSections) {

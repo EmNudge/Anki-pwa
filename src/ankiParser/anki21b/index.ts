@@ -45,15 +45,15 @@ export function getDataFromAnki21b(db: Database): AnkiDB21bData {
       ntid: string;
     }>(db, "SELECT name, config, cast(ntid as text) as ntid FROM templates");
 
-    const templatesMap = new Map<string, { name: string; afmt: string; qfmt: string }[]>()
+    const templatesMap = new Map<string, { name: string; afmt: string; qfmt: string }[]>();
 
     for (const template of templates) {
       const templateProto = parseTemplatesProto(template.config);
 
       const { aFormat, qFormat } = templateProto;
 
-      const curTemplate = { name: template.name, afmt: aFormat, qfmt: qFormat }
-      templatesMap.set(template.ntid, [...(templatesMap.get(template.ntid) ?? []), curTemplate])
+      const curTemplate = { name: template.name, afmt: aFormat, qfmt: qFormat };
+      templatesMap.set(template.ntid, [...(templatesMap.get(template.ntid) ?? []), curTemplate]);
     }
 
     return templatesMap;
@@ -68,15 +68,12 @@ export function getDataFromAnki21b(db: Database): AnkiDB21bData {
       flds: string;
       tags: string;
       mid: string;
-    }>(
-      db,
-      "SELECT flds, tags, cast(mid as text) as mid FROM notes",
-    );
+    }>(db, "SELECT flds, tags, cast(mid as text) as mid FROM notes");
 
     return notes.map((note) => {
-      const fieldNames = fields.filter((field) => note.mid === field.ntid).map((
-        field,
-      ) => field.name);
+      const fieldNames = fields
+        .filter((field) => note.mid === field.ntid)
+        .map((field) => field.name);
 
       const templates = templatesMap.get(note.mid);
       assertTruthy(templates, `Template for note ${note.mid} not found`);
@@ -88,7 +85,7 @@ export function getDataFromAnki21b(db: Database): AnkiDB21bData {
         // anki21b only has one template per model?
         templates: templates,
         tags: [],
-      }
+      };
     });
   })();
 

@@ -64,9 +64,7 @@ export function getDeckConfig(db: Database) {
   const { root } = protobuf.parse(deckConfigProto);
   const DeckConfig = root.lookupType("ConfigInDeckConfig");
 
-  const deckConfigParsed = DeckConfig.decode(
-    deckConfig.config,
-  ) as unknown as Anki21bDeckConfig;
+  const deckConfigParsed = DeckConfig.decode(deckConfig.config) as unknown as Anki21bDeckConfig;
 
   return { ...deckConfig, config: deckConfigParsed };
 }

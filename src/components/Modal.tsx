@@ -7,6 +7,7 @@ export function Modal(props: {
   children: JSX.Element;
   onClose: () => void;
 }) {
+  // eslint-disable-next-line no-unused-expressions
   css`
     .modal-container {
       position: fixed;
