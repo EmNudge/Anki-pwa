@@ -4,7 +4,7 @@ import path from 'path';
 /**
  * Helper to load an Anki deck file into the application
  */
-export async function loadAnkiDeck(page: Page, filename: string = 'example_music_intervals.apkg') {
+async function loadAnkiDeck(page: Page, filename: string = 'example_music_intervals.apkg') {
   const fs = await import('fs');
   const deckPath = path.join(process.cwd(), 'src/ankiParser/__tests__', filename);
 
@@ -35,7 +35,7 @@ export async function loadAnkiDeck(page: Page, filename: string = 'example_music
 /**
  * Helper to clear IndexedDB (review data)
  */
-export async function clearReviewData(page: Page) {
+async function clearReviewData(page: Page) {
   await page.evaluate(async () => {
     const dbName = 'anki-review-db';
     return new Promise<void>((resolve, reject) => {
@@ -54,7 +54,7 @@ export async function clearReviewData(page: Page) {
 /**
  * Helper to clear the deck cache
  */
-export async function clearDeckCache(page: Page) {
+async function clearDeckCache(page: Page) {
   await page.evaluate(async () => {
     const cache = await caches.open('anki-cache');
     await cache.delete('anki-deck');
@@ -64,7 +64,7 @@ export async function clearDeckCache(page: Page) {
 /**
  * Helper to clear localStorage
  */
-export async function clearLocalStorage(page: Page) {
+async function clearLocalStorage(page: Page) {
   await page.evaluate(() => {
     localStorage.clear();
   });

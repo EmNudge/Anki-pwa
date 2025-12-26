@@ -82,7 +82,7 @@ async function getFilesFromEntries(entries: Entry[]): Promise<Map<string, string
   return new Map(files.map((file) => [file.name, URL.createObjectURL(file.data)]));
 }
 
-export type AnkiDb = { type: "21b" | "21" | "2"; array: Uint8Array };
+type AnkiDb = { type: "21b" | "21" | "2"; array: Uint8Array };
 
 async function getAnkiDbFromEntries(entries: Entry[]): Promise<AnkiDb> {
   const sqliteDbEntry = (() => {
