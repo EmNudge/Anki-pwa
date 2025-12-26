@@ -64,8 +64,8 @@ test.describe('Card Display', () => {
     const cardContent = page.locator('.card-content');
     await expect(cardContent).toBeVisible();
 
-    // Check card has button area
-    const buttons = page.locator('.card button, .card .button-set');
+    // Check card has button area (buttons are now rendered using design system)
+    const buttons = page.locator('button.ds-button, .button-set');
     await expect(buttons.first()).toBeVisible();
   });
 });

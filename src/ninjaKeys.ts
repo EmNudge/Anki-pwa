@@ -1,4 +1,4 @@
-import { ankiCachePromise, ankiDataSig, cardsSig, setBlobSig, setDeckInfoSig } from "./stores";
+import { ankiCachePromise, ankiDataSig, cardsSig, setBlobSig } from "./stores";
 import { setSelectedCardSig } from "./stores";
 import { templatesSig } from "./stores";
 import { createMemo } from "solid-js";
@@ -9,6 +9,7 @@ import {
   toggleScheduler,
   toggleSoundEffects,
   setSchedulerSettingsModalOpenSig,
+  resetScheduler,
 } from "./stores";
 import type { Command } from "./commandPaletteStore";
 
@@ -37,34 +38,6 @@ export function useCommands() {
           inputEl.click();
         },
       },
-      ...(ankiData
-        ? [
-            {
-              id: "deck-info",
-              title: "Deck Info",
-              icon: "ℹ️",
-              hotkey: "ctrl+I",
-              handler: () => {
-                console.log("deck-info handler called!");
-                // Count unique templates across all cards
-                const uniqueTemplates = new Set<string>();
-                ankiData.cards.forEach((card) => {
-                  card.templates.forEach((template) => {
-                    uniqueTemplates.add(template.name);
-                  });
-                });
-
-                const deckInfo = {
-                  name: ankiData.files.get("info.txt") ?? "Unknown",
-                  cardCount: ankiData.cards.length,
-                  templateCount: uniqueTemplates.size,
-                };
-                console.log("Setting deckInfoSig to:", deckInfo);
-                setDeckInfoSig(deckInfo);
-              },
-            },
-          ]
-        : []),
       {
         id: "next-card",
         title: "Next Card",
@@ -122,6 +95,14 @@ export function useCommands() {
         hotkey: "ctrl+,",
         handler: () => {
           setSchedulerSettingsModalOpenSig(true);
+        },
+      },
+      {
+        id: "reset-scheduler",
+        title: "Reset Scheduler",
+        icon: "🔄",
+        handler: () => {
+          resetScheduler();
         },
       },
       ...cardsSig().map((_card, index) => ({

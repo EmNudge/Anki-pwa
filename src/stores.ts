@@ -121,12 +121,36 @@ export async function initializeReviewQueue() {
  */
 export function moveToNextReviewCard() {
   const dueCards = dueCardsSig();
+  if (dueCards.length === 0) {
+    setCurrentReviewCardSig(null);
+    return;
+  }
+
   const currentIndex = dueCards.findIndex((card) => card.cardId === currentReviewCardSig()?.cardId);
 
   if (currentIndex < dueCards.length - 1) {
+    // Move to next card
     setCurrentReviewCardSig(dueCards[currentIndex + 1] ?? null);
   } else {
-    // No more cards
-    setCurrentReviewCardSig(null);
+    // Wrap around to the beginning
+    setCurrentReviewCardSig(dueCards[0] ?? null);
+  }
+}
+
+/**
+ * Reset all scheduler data and re-initialize the review queue
+ */
+export async function resetScheduler() {
+  // Clear all review data from IndexedDB
+  await reviewDB.clearAll();
+
+  // Reset state
+  setReviewQueueSig(null);
+  setDueCardsSig([]);
+  setCurrentReviewCardSig(null);
+
+  // Re-initialize the review queue if scheduler is enabled
+  if (schedulerEnabledSig() && cardsSig().length > 0) {
+    await initializeReviewQueue();
   }
 }
