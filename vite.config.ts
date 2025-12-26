@@ -8,6 +8,10 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   optimizeDeps: {
     exclude: ['@bokuweb/zstd-wasm'],
+    esbuildOptions: {
+      jsx: 'automatic',
+      jsxImportSource: 'solid-js',
+    },
   },
   build: {
     target: 'es2020',
