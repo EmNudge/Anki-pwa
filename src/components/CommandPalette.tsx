@@ -244,6 +244,7 @@ export function CommandPalette() {
   // Filter commands based on search and parent
   const filteredCommands = () => {
     const commands = commandsSig();
+    console.log("filteredCommands called, commands:", commands);
     const query = searchQuery().toLowerCase();
     const parent = currentParent();
 

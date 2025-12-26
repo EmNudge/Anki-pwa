@@ -24,6 +24,7 @@ export const commandPaletteAPI = {
     setCommandPaletteOpenSig(false);
   },
   setCommands: (commands: Command[]) => {
+    console.log("setCommands called, commands:", commands);
     setCommandsSig(commands);
   },
 };

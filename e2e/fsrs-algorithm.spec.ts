@@ -19,7 +19,7 @@ test.describe('FSRS Algorithm', () => {
       // Open command palette
       await page.keyboard.press('Meta+k');
 
-      // Wait for ninja-keys
+      // Wait for command palette
       await page.waitForTimeout(200);
 
       // Type to search for scheduler settings
