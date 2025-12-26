@@ -15,6 +15,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "~": path.resolve(__dirname, "src"),
+      // Ensure any transient JSX runtime import resolves to Solid during scanning
+      "react/jsx-dev-runtime": "solid-js/jsx-runtime",
     },
   },
   plugins: [
