@@ -7,6 +7,7 @@ import { AnkiDB2Data, getDataFromAnki2 } from "./anki2";
 export type AnkiData = {
   files: Map<string, string>;
   cards: AnkiDB2Data["cards"] | AnkiDB21bData["cards"];
+  deckName: string;
 };
 
 export async function getAnkiDataFromBlob(file: Blob): Promise<AnkiData> {
@@ -16,10 +17,10 @@ export async function getAnkiDataFromBlob(file: Blob): Promise<AnkiData> {
   const db = new SQL.Database(ankiDb.array);
 
   if (ankiDb.type === "21b") {
-    const { cards } = getDataFromAnki21b(db);
-    return { cards, files };
+    const { cards, deckName } = getDataFromAnki21b(db);
+    return { cards, files, deckName };
   }
 
-  const { cards } = getDataFromAnki2(db);
-  return { cards, files };
+  const { cards, deckName } = getDataFromAnki2(db);
+  return { cards, files, deckName };
 }

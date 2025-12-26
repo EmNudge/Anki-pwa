@@ -18,6 +18,7 @@ export type AnkiDB21bData = {
     }[];
   }[];
   notesTypes: ReturnType<typeof getNotesType>;
+  deckName: string;
 };
 
 export function getDataFromAnki21b(db: Database): AnkiDB21bData {
@@ -91,5 +92,9 @@ export function getDataFromAnki21b(db: Database): AnkiDB21bData {
 
   const notesTypes = getNotesType(db);
 
-  return { cards, notesTypes };
+  // anki21b format doesn't store deck name in the same way as anki2
+  // Default to "Unknown" for now
+  const deckName = "Unknown";
+
+  return { cards, notesTypes, deckName };
 }
