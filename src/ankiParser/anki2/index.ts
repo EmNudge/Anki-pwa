@@ -13,10 +13,11 @@ export type AnkiDB2Data = {
     templates: z.infer<typeof modelSchema>[string]["tmpls"];
   }[];
   notesTypes: null;
+  deckName: string;
 };
 
 export function getDataFromAnki2(db: Database): AnkiDB2Data {
-  const models = (() => {
+  const { models, deckName } = (() => {
     // anki2 and anki21 only use the first row of the col table
     // models, decks, and dconf are JSON strings
     const colData = executeQuery<{
@@ -27,7 +28,22 @@ export function getDataFromAnki2(db: Database): AnkiDB2Data {
       tags: string;
     }>(db, "SELECT * from col");
 
-    return modelSchema.parse(JSON.parse(colData.models));
+    const parsedModels = modelSchema.parse(JSON.parse(colData.models));
+
+    // Parse decks JSON to extract deck name
+    let deckName = "Unknown";
+    try {
+      const decks = JSON.parse(colData.decks) as Record<string, { name?: string }>;
+      const deckEntries = Object.values(decks);
+      if (deckEntries.length > 0 && deckEntries[0]?.name) {
+        deckName = deckEntries[0].name;
+      }
+    } catch (e) {
+      // If parsing fails, keep default "Unknown"
+      console.warn("Failed to parse deck name from decks JSON:", e);
+    }
+
+    return { models: parsedModels, deckName };
   })();
 
   const cards = (() => {
@@ -52,5 +68,5 @@ export function getDataFromAnki2(db: Database): AnkiDB2Data {
     });
   })();
 
-  return { cards, notesTypes: null };
+  return { cards, notesTypes: null, deckName };
 }

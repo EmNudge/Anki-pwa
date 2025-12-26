@@ -128,7 +128,7 @@ function App() {
       });
 
       const deckInfo = {
-        name: ankiData.files.get("info.txt") ?? "Unknown",
+        name: ankiData.deckName,
         cardCount: ankiData.cards.length,
         templateCount: uniqueTemplates.size,
       };
