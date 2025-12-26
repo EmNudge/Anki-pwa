@@ -1,0 +1,158 @@
+import { test, expect } from './fixtures';
+
+test.describe('Keyboard Shortcuts', () => {
+  test('should reveal card with Space key', async ({ loadedDeckPage: page }) => {
+    // Verify we're on front side
+    await expect(page.locator('button:has-text("Reveal")')).toBeVisible();
+
+    // Press Space to reveal
+    await page.keyboard.press('Space');
+
+    // Answer buttons should appear
+    await expect(page.locator('button:has-text("Again")')).toBeVisible();
+    await expect(page.locator('button:has-text("Hard")')).toBeVisible();
+    await expect(page.locator('button:has-text("Good")')).toBeVisible();
+    await expect(page.locator('button:has-text("Easy")')).toBeVisible();
+  });
+
+  test('should answer with "a" key for Again', async ({ loadedDeckPage: page }) => {
+    // Reveal card
+    await page.keyboard.press('Space');
+
+    // Press 'a' for Again
+    await page.keyboard.press('a');
+
+    // Should move to next card (Reveal button visible again)
+    await page.waitForTimeout(300);
+    await expect(page.locator('button:has-text("Reveal")')).toBeVisible();
+  });
+
+  test('should answer with "h" key for Hard', async ({ loadedDeckPage: page }) => {
+    // Reveal card
+    await page.keyboard.press('Space');
+
+    // Press 'h' for Hard
+    await page.keyboard.press('h');
+
+    // Should move to next card
+    await page.waitForTimeout(300);
+    await expect(page.locator('button:has-text("Reveal")')).toBeVisible();
+  });
+
+  test('should answer with "g" key for Good', async ({ loadedDeckPage: page }) => {
+    // Reveal card
+    await page.keyboard.press('Space');
+
+    // Press 'g' for Good
+    await page.keyboard.press('g');
+
+    // Should move to next card
+    await page.waitForTimeout(300);
+    await expect(page.locator('button:has-text("Reveal")')).toBeVisible();
+  });
+
+  test('should answer with "e" key for Easy', async ({ loadedDeckPage: page }) => {
+    // Reveal card
+    await page.keyboard.press('Space');
+
+    // Press 'e' for Easy
+    await page.keyboard.press('e');
+
+    // Should move to next card
+    await page.waitForTimeout(300);
+    await expect(page.locator('button:has-text("Reveal")')).toBeVisible();
+  });
+
+  test('should complete full review flow with keyboard only', async ({ loadedDeckPage: page }) => {
+    // Review 3 cards using only keyboard
+    for (let i = 0; i < 3; i++) {
+      // Verify front side
+      await expect(page.locator('button:has-text("Reveal")')).toBeVisible();
+
+      // Reveal with Space
+      await page.keyboard.press('Space');
+
+      // Wait for back side
+      await expect(page.locator('button:has-text("Good")')).toBeVisible();
+
+      // Answer with 'g' (Good)
+      await page.keyboard.press('g');
+
+      // Wait for transition
+      await page.waitForTimeout(300);
+    }
+
+    // After 3 reviews, we should still have a card showing
+    await expect(page.locator('.card')).toBeVisible();
+  });
+
+  test('should ignore answer keys when on front side', async ({ loadedDeckPage: page }) => {
+    // Verify we're on front side
+    await expect(page.locator('button:has-text("Reveal")')).toBeVisible();
+
+    // Try pressing answer keys (should do nothing)
+    await page.keyboard.press('a');
+    await page.waitForTimeout(200);
+
+    // Should still be on front side
+    await expect(page.locator('button:has-text("Reveal")')).toBeVisible();
+
+    // Try another answer key
+    await page.keyboard.press('g');
+    await page.waitForTimeout(200);
+
+    // Should still be on front side
+    await expect(page.locator('button:has-text("Reveal")')).toBeVisible();
+  });
+
+  test('should ignore Space key when on back side', async ({ loadedDeckPage: page }) => {
+    // Reveal card
+    await page.keyboard.press('Space');
+
+    // Verify we're on back side
+    await expect(page.locator('button:has-text("Again")')).toBeVisible();
+
+    // Press Space again (should do nothing)
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(200);
+
+    // Should still be on back side
+    await expect(page.locator('button:has-text("Again")')).toBeVisible();
+  });
+
+  test('should support rapid keyboard review', async ({ loadedDeckPage: page }) => {
+    // Quickly review 5 cards
+    for (let i = 0; i < 5; i++) {
+      await page.keyboard.press('Space'); // Reveal
+      await page.waitForTimeout(100);
+      await page.keyboard.press('g'); // Good
+      await page.waitForTimeout(100);
+    }
+
+    // Should complete without errors
+    await expect(page.locator('.card')).toBeVisible();
+
+    // Verify reviews were recorded
+    const reviewCount = await page.evaluate(async () => {
+      const dbName = 'anki-review-db';
+
+      return new Promise<number>((resolve, reject) => {
+        const request = indexedDB.open(dbName);
+
+        request.onsuccess = () => {
+          const db = request.result;
+          const transaction = db.transaction(['reviewLogs'], 'readonly');
+          const store = transaction.objectStore('reviewLogs');
+          const countRequest = store.count();
+
+          countRequest.onsuccess = () => resolve(countRequest.result);
+          countRequest.onerror = () => reject(countRequest.error);
+        };
+
+        request.onerror = () => reject(request.error);
+      });
+    });
+
+    expect(reviewCount).toBeGreaterThanOrEqual(5);
+  });
+});

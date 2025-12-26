@@ -16,7 +16,7 @@ message TemplateConfig {
   string a_format_browser = 4;
   int64 target_deck_id = 5;
   string browser_font_name = 6;
-  UInt32 browser_font_size = 7;
+  uint32 browser_font_size = 7;
   // used for merging notetypes on import (Anki 23.10)
   optional int64 id = 8;
 
