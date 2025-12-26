@@ -1,7 +1,8 @@
-import { Card as SM2Card, Scheduler } from "@open-spaced-repetition/sm-2";
 import type { CardReviewState, Answer, SchedulerSettings, DailyStats } from "./types";
-import { ANSWER_TO_RATING } from "./types";
 import { reviewDB } from "./db";
+import type { SchedulingAlgorithm } from "./algorithm";
+import { SM2Algorithm } from "./sm2-algorithm";
+import { FSRSAlgorithm } from "./fsrs-algorithm";
 
 /**
  * Represents a card ready for review, combining deck data with review state
@@ -40,6 +41,7 @@ export class ReviewQueue {
   private deckId: string;
   private settings: SchedulerSettings;
   private todayStats: DailyStats;
+  private algorithm: SchedulingAlgorithm;
 
   constructor(deckId: string, settings: SchedulerSettings) {
     this.deckId = deckId;
@@ -50,6 +52,13 @@ export class ReviewQueue {
       reviewCount: 0,
       totalTimeMs: 0,
     };
+
+    // Initialize the appropriate algorithm
+    if (settings.algorithm === "fsrs") {
+      this.algorithm = new FSRSAlgorithm(settings.fsrsParams);
+    } else {
+      this.algorithm = new SM2Algorithm();
+    }
   }
 
   /**
@@ -102,11 +111,12 @@ export class ReviewQueue {
 
         // Create new review state if it doesn't exist
         if (!reviewState) {
-          const sm2Card = new SM2Card();
+          const cardState = this.algorithm.createCard();
           reviewState = {
             cardId,
             deckId: this.deckId,
-            sm2State: sm2Card.toJSON(),
+            algorithm: this.settings.algorithm,
+            cardState,
             createdAt: now.getTime(),
             lastReviewed: null,
           };
@@ -138,8 +148,8 @@ export class ReviewQueue {
 
     for (const card of queue) {
       try {
-        const sm2Card = SM2Card.fromJSON(card.reviewState.sm2State);
-        const isDue = sm2Card.due <= now;
+        const dueDate = this.algorithm.getDueDate(card.reviewState.cardState);
+        const isDue = dueDate <= now;
 
         if (card.isNew) {
           // New cards - respect daily limit
@@ -172,8 +182,8 @@ export class ReviewQueue {
       if (!a.isNew && b.isNew) return 1;
 
       try {
-        const aDue = new Date(a.reviewState.sm2State.due).getTime();
-        const bDue = new Date(b.reviewState.sm2State.due).getTime();
+        const aDue = this.algorithm.getDueDate(a.reviewState.cardState).getTime();
+        const bDue = this.algorithm.getDueDate(b.reviewState.cardState).getTime();
         return aDue - bDue;
       } catch (error) {
         console.error("Error sorting cards:", error);
@@ -191,16 +201,13 @@ export class ReviewQueue {
     reviewTimeMs: number,
   ): Promise<CardReviewState> {
     try {
-      const rating = ANSWER_TO_RATING[answer];
-      const sm2Card = SM2Card.fromJSON(reviewCard.reviewState.sm2State);
-
-      // Review the card using SM-2
-      const result = Scheduler.reviewCard(sm2Card, rating);
+      // Review the card using the selected algorithm
+      const result = this.algorithm.reviewCard(reviewCard.reviewState.cardState, answer);
 
       // Update review state
       const updatedState: CardReviewState = {
         ...reviewCard.reviewState,
-        sm2State: result.card.toJSON(),
+        cardState: result.cardState,
         lastReviewed: Date.now(),
       };
 
@@ -211,8 +218,8 @@ export class ReviewQueue {
       await reviewDB.saveReviewLog({
         cardId: reviewCard.cardId,
         timestamp: Date.now(),
-        rating,
-        reviewLog: result.reviewLog.toJSON(),
+        rating: answer, // Store the answer instead of rating
+        reviewLog: result.reviewLog,
       });
 
       // Update daily stats
@@ -238,21 +245,14 @@ export class ReviewQueue {
    */
   getNextIntervals(reviewCard: ReviewCard): Record<Answer, string> {
     try {
-      const sm2Card = SM2Card.fromJSON(reviewCard.reviewState.sm2State);
+      const nextIntervals = this.algorithm.getNextIntervals(reviewCard.reviewState.cardState);
 
       const intervals: Record<Answer, string> = {
-        again: "",
-        hard: "",
-        good: "",
-        easy: "",
+        again: this.formatInterval(nextIntervals.again),
+        hard: this.formatInterval(nextIntervals.hard),
+        good: this.formatInterval(nextIntervals.good),
+        easy: this.formatInterval(nextIntervals.easy),
       };
-
-      for (const answer of ["again", "hard", "good", "easy"] as Answer[]) {
-        const rating = ANSWER_TO_RATING[answer];
-        const result = Scheduler.reviewCard(sm2Card, rating);
-        const interval = this.formatInterval(result.card.due);
-        intervals[answer] = interval;
-      }
 
       return intervals;
     } catch (error) {
@@ -307,6 +307,35 @@ export class ReviewQueue {
    * Update settings
    */
   updateSettings(settings: SchedulerSettings): void {
+    const oldAlgorithm = this.settings.algorithm;
     this.settings = settings;
+
+    // Recreate the algorithm if it changed
+    if (settings.algorithm !== oldAlgorithm) {
+      if (settings.algorithm === "fsrs") {
+        this.algorithm = new FSRSAlgorithm(settings.fsrsParams);
+      } else {
+        this.algorithm = new SM2Algorithm();
+      }
+    }
+  }
+
+  /**
+   * Get display info for a card (for UI visualization)
+   */
+  getCardDisplayInfo(reviewCard: ReviewCard): {
+    ease?: number;
+    interval?: number;
+    repetitions?: number;
+    stability?: number;
+    difficulty?: number;
+    [key: string]: number | string | undefined;
+  } {
+    try {
+      return this.algorithm.getDisplayInfo(reviewCard.reviewState.cardState);
+    } catch (error) {
+      console.error("Error getting display info:", error);
+      return {};
+    }
   }
 }

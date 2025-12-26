@@ -15,15 +15,18 @@ import {
   moveToNextReviewCard,
   reviewQueueSig,
   schedulerEnabledSig,
+  schedulerSettingsModalOpenSig,
   selectedCardSig,
   selectedTemplateSig,
   setBlobSig,
   setDeckInfoSig,
+  setSchedulerSettingsModalOpenSig,
   setSelectedCardSig,
   templatesSig,
 } from "./stores";
 import { Modal } from "./components/Modal";
 import { SRSVisualization } from "./components/SRSVisualization";
+import { SchedulerSettingsModal } from "./components/SchedulerSettings";
 
 function App() {
   // eslint-disable-next-line no-unused-expressions
@@ -139,6 +142,11 @@ function App() {
           <p>Template Count: {deckInfoSig()?.templateCount}</p>
         </div>
       </Modal>
+
+      <SchedulerSettingsModal
+        isOpen={schedulerSettingsModalOpenSig()}
+        onClose={() => setSchedulerSettingsModalOpenSig(false)}
+      />
 
       {cardsSig().length > 0 && <SRSVisualization />}
 

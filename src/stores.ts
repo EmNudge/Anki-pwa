@@ -75,6 +75,8 @@ export const [currentReviewCardSig, setCurrentReviewCardSig] = createSignal<Revi
   null,
 );
 
+export const [schedulerSettingsModalOpenSig, setSchedulerSettingsModalOpenSig] = createSignal(false);
+
 /**
  * Initialize the review queue for the current deck
  */

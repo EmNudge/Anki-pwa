@@ -1,4 +1,8 @@
-import type { Card as SM2Card, ReviewLog } from "@open-spaced-repetition/sm-2";
+
+/**
+ * Supported scheduling algorithms
+ */
+export type AlgorithmType = "sm2" | "fsrs";
 
 /**
  * Answer types for review buttons
@@ -20,7 +24,7 @@ export const ANSWER_TO_RATING: Record<Answer, number> = {
 };
 
 /**
- * Review state for a card, combining our card ID with SM-2 scheduling data
+ * Review state for a card, combining our card ID with scheduling data
  */
 export interface CardReviewState {
   /**
@@ -34,9 +38,16 @@ export interface CardReviewState {
   deckId: string;
 
   /**
-   * SM-2 card state (serializable)
+   * Scheduling algorithm being used
    */
-  sm2State: ReturnType<SM2Card["toJSON"]>;
+  algorithm: AlgorithmType;
+
+  /**
+   * Card state (serializable) - structure depends on algorithm
+   * For SM-2: { due: Date, interval: number, easeFactor: number, repetitions: number }
+   * For FSRS: { due: Date, stability: number, difficulty: number, ... }
+   */
+  cardState: unknown;
 
   /**
    * Timestamp when this card was first created/seen
@@ -54,6 +65,11 @@ export interface CardReviewState {
  */
 export interface SchedulerSettings {
   /**
+   * Scheduling algorithm to use
+   */
+  algorithm: AlgorithmType;
+
+  /**
    * Maximum number of new cards to show per day
    */
   dailyNewLimit: number;
@@ -67,12 +83,33 @@ export interface SchedulerSettings {
    * Show cards ahead of schedule if daily reviews are complete
    */
   showAheadOfSchedule: boolean;
+
+  /**
+   * FSRS-specific settings (only used if algorithm is 'fsrs')
+   */
+  fsrsParams?: {
+    /**
+     * FSRS weights/parameters (17 parameters)
+     */
+    weights?: number[];
+
+    /**
+     * Target retention rate (0-1)
+     */
+    requestRetention?: number;
+
+    /**
+     * Maximum interval in days
+     */
+    maximumInterval?: number;
+  };
 }
 
 /**
  * Default scheduler settings
  */
 export const DEFAULT_SCHEDULER_SETTINGS: SchedulerSettings = {
+  algorithm: "sm2",
   dailyNewLimit: 20,
   dailyReviewLimit: 200,
   showAheadOfSchedule: false,
@@ -109,6 +146,6 @@ export interface DailyStats {
 export interface StoredReviewLog {
   cardId: string;
   timestamp: number;
-  rating: number;
-  reviewLog: ReturnType<ReviewLog["toJSON"]>;
+  rating: Answer | number; // Can be Answer string or legacy number rating
+  reviewLog: unknown; // Algorithm-specific review log data
 }
