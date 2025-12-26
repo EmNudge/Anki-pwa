@@ -28,7 +28,8 @@ import { Modal } from "./components/Modal";
 import { SRSVisualization } from "./components/SRSVisualization";
 import { SchedulerSettingsModal } from "./components/SchedulerSettings";
 import { CommandPalette } from "./components/CommandPalette";
-import { commandPaletteAPI } from "./commandPaletteStore";
+import { setCommandPaletteOpenSig } from "./commandPaletteStore";
+import { useCommands } from "./ninjaKeys";
 
 function App() {
   // eslint-disable-next-line no-unused-expressions
@@ -62,6 +63,7 @@ function App() {
 
   const [activeSide, setActiveSide] = createSignal<"front" | "back">("front");
   const [reviewStartTime, setReviewStartTime] = createSignal<number>(Date.now());
+  const commands = useCommands();
 
   // Initialize review queue when cards are loaded and scheduler is enabled
   createEffect(() => {
@@ -206,13 +208,13 @@ function App() {
       <div class="keyboard-hint">
         <button
           onClick={() => {
-            commandPaletteAPI.open();
+            setCommandPaletteOpenSig(true);
           }}
         >
           <kbd>Cmd</kbd> + <kbd>K</kbd>
         </button>
       </div>
-      <CommandPalette />
+      <CommandPalette commands={commands()} />
     </main>
   );
 }
