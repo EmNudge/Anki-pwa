@@ -13,13 +13,13 @@ export function SRSVisualization() {
   // eslint-disable-next-line no-unused-expressions
   css`
     .srs-container {
-      border: 1px solid var(--border-color);
-      background: var(--surface-color-01);
-      border-radius: 4px;
-      padding: 1rem;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      border-radius: var(--radius-sm);
+      padding: var(--spacing-4);
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: var(--spacing-4);
       max-width: 800px;
     }
 
@@ -27,8 +27,8 @@ export function SRSVisualization() {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: var(--spacing-2);
       cursor: pointer;
       user-select: none;
     }
@@ -38,16 +38,16 @@ export function SRSVisualization() {
     }
 
     .srs-title {
-      font-weight: 600;
-      font-size: 1.1rem;
+      font-weight: var(--font-weight-semibold);
+      font-size: var(--font-size-lg);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--spacing-2);
     }
 
     .expand-icon {
-      transition: transform 0.2s ease;
-      font-size: 0.8rem;
+      transition: var(--transition-transform);
+      font-size: var(--font-size-sm);
     }
 
     .expand-icon.collapsed {
@@ -55,129 +55,131 @@ export function SRSVisualization() {
     }
 
     .status-badge {
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 500;
+      padding: var(--spacing-1) var(--spacing-3);
+      border-radius: var(--radius-lg);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
     }
 
     .status-enabled {
-      background: #10b981;
+      background: var(--color-success-500);
       color: white;
     }
 
     .status-disabled {
-      background: #6b7280;
+      background: var(--color-neutral-500);
       color: white;
     }
 
     .srs-section {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--spacing-2);
     }
 
     .section-title {
-      font-weight: 600;
-      font-size: 0.9rem;
-      opacity: 0.7;
+      font-weight: var(--font-weight-semibold);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: var(--letter-spacing-wide);
     }
 
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 0.75rem;
+      gap: var(--spacing-3);
     }
 
     .stat-card {
-      background: var(--surface-color-02);
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      padding: 0.75rem;
+      background: var(--color-surface-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: var(--spacing-3);
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: var(--spacing-1);
     }
 
     .stat-label {
-      font-size: 0.75rem;
-      opacity: 0.6;
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: var(--letter-spacing-wide);
     }
 
     .stat-value {
-      font-size: 1.5rem;
-      font-weight: 700;
+      font-size: var(--font-size-2xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text-primary);
     }
 
     .stat-secondary {
-      font-size: 0.875rem;
-      opacity: 0.7;
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
     }
 
     .progress-bar-container {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: var(--spacing-1);
     }
 
     .progress-bar-label {
       display: flex;
       justify-content: space-between;
-      font-size: 0.875rem;
+      font-size: var(--font-size-sm);
     }
 
     .progress-bar-bg {
       width: 100%;
-      height: 1rem;
-      background: var(--surface-color-02);
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
+      height: var(--spacing-4);
+      background: var(--color-surface-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
       overflow: hidden;
     }
 
     .progress-bar-fill {
       height: 100%;
-      background: linear-gradient(90deg, #3b82f6, #2563eb);
-      transition: width 0.3s ease;
+      background: linear-gradient(90deg, var(--color-primary-500), var(--color-primary-600));
+      transition: width var(--duration-slow) var(--ease-out);
     }
 
     .progress-bar-fill.complete {
-      background: linear-gradient(90deg, #10b981, #059669);
+      background: linear-gradient(90deg, var(--color-success-500), var(--color-success-600));
     }
 
     .card-info-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 0.5rem;
+      gap: var(--spacing-2);
     }
 
     .info-item {
       display: flex;
       justify-content: space-between;
-      padding: 0.5rem;
-      background: var(--surface-color-02);
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
+      padding: var(--spacing-2);
+      background: var(--color-surface-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
     }
 
     .info-label {
-      opacity: 0.6;
-      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-sm);
     }
 
     .info-value {
-      font-weight: 600;
-      font-size: 0.875rem;
+      font-weight: var(--font-weight-semibold);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
     }
 
     .no-cards-message {
       text-align: center;
-      padding: 2rem;
-      opacity: 0.5;
+      padding: var(--spacing-8);
+      color: var(--color-text-tertiary);
       font-style: italic;
     }
   `;
@@ -265,7 +267,7 @@ export function SRSVisualization() {
           {/* Daily Progress */}
           <div class="srs-section">
             <div class="section-title">Daily Progress</div>
-            <div style={{ display: "flex", "flex-direction": "column", gap: "1rem" }}>
+            <div style={{ display: "flex", "flex-direction": "column", gap: "var(--spacing-4)" }}>
               <div class="progress-bar-container">
                 <div class="progress-bar-label">
                   <span>New Cards</span>

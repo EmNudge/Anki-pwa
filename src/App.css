@@ -3,53 +3,37 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--spacing-8);
   text-align: center;
 }
-:root[data-theme="light"] {
-  --background-color: #e9e9e9;
-  --surface-color-01: #f2f2f2;
-  --surface-color-02: #fff;
 
-  --text-color-01: #343434;
-  --text-color-02: #535353;
-  --box-shadow: -2px 2px 1px #cecece;
-  --border-color: #d5d5d5;
-}
-:root[data-theme="dark"] {
-  --background-color: #242424;
-  --surface-color-01: #202020;
-  --surface-color-02: #1a1a1a;
+/*
+  DEPRECATED: Legacy theme variables below are kept for backward compatibility.
+  All new code should use design system tokens from design-system/tokens/
+  - Use --color-* tokens instead of --*-color-*
+  - Use --spacing-* tokens for spacing
+  - Use --shadow-* tokens for shadows
+*/
 
-  --text-color-01: #f0f0f0;
-  --text-color-02: #d0d0d0;
-
-  --box-shadow: -1px 2px 5px #171717;
-  --border-color: #282828;
-}
-
-body {
-  background-color: var(--background-color);
-  color: var(--text-color-01);
-}
+/* Deprecated theme styles moved to design-system/tokens/colors.css */
 
 .logo {
   height: 6em;
-  padding: 1.5em;
+  padding: var(--spacing-6);
   will-change: filter;
-  transition: filter 300ms;
+  transition: filter var(--duration-slow);
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em var(--color-primary-500));
 }
 .logo.solid:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
 .card {
-  padding: 2em;
+  padding: var(--spacing-8);
 }
 
 .read-the-docs {
-  color: #888;
+  color: var(--color-text-tertiary);
 }

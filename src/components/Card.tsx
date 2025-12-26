@@ -21,15 +21,15 @@ export function Card(props: {
   // eslint-disable-next-line no-unused-expressions
   css`
     .card {
-      border: 1px solid var(--border-color);
-      background: var(--surface-color-01, yellow);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
       box-shadow: var(--box-shadow);
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
 
       display: grid;
       grid-template-rows: 1fr auto;
       justify-items: stretch;
-      gap: 1rem;
+      gap: var(--spacing-4);
 
       /* shrink width for smaller screens */
       width: 800px;
@@ -43,25 +43,25 @@ export function Card(props: {
     }
 
     .card-content :global(hr) {
-      margin: 1rem 0;
+      margin: var(--spacing-4) 0;
       opacity: 0.25;
     }
 
     h1 {
       margin: 0;
-      font-weight: 400;
-      font-size: 1.5rem;
+      font-weight: var(--font-weight-normal);
+      font-size: var(--font-size-2xl);
     }
 
     .button-set {
       display: flex;
       justify-content: center;
-      gap: 1rem;
+      gap: var(--spacing-4);
       flex-wrap: wrap;
 
       button {
         display: flex;
-        gap: 0.5rem;
+        gap: var(--spacing-2);
 
         .time {
           opacity: 0.5;

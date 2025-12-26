@@ -15,13 +15,13 @@ export function Modal(props: {
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
+      background-color: var(--color-overlay);
       backdrop-filter: blur(10px);
 
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
+      z-index: var(--z-index-modal);
     }
 
     .modal {
@@ -29,35 +29,41 @@ export function Modal(props: {
       width: 800px;
       max-width: 90vw;
       max-height: 90vh;
-      background-color: var(--surface-color-01);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
 
       display: flex;
       flex-direction: column;
-      z-index: 1001;
+      z-index: calc(var(--z-index-modal) + 1);
     }
 
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1rem;
-      border-bottom: 1px solid var(--border-color);
+      padding: var(--spacing-4);
+      border-bottom: 1px solid var(--color-border);
     }
 
     .content {
-      padding: 2rem;
+      padding: var(--spacing-8);
       overflow-y: auto;
     }
 
     button {
       background: none;
-      color: var(--text-color-01);
+      color: var(--color-text-primary);
       border: none;
       cursor: pointer;
+      transition: var(--transition-opacity);
     }
+
+    button:hover {
+      opacity: 0.7;
+    }
+
     button svg {
       width: 24px;
       height: 24px;
