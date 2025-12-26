@@ -1,8 +1,6 @@
 import { Show, createMemo, createSignal } from "solid-js";
 import { css } from "solid-styled";
 import { Card as SM2Card } from "@open-spaced-repetition/sm-2";
-import type { ReviewCard } from "../scheduler/queue";
-import type { SchedulerSettings } from "../scheduler/types";
 import {
   currentReviewCardSig,
   dueCardsSig,
@@ -254,117 +252,120 @@ export function SRSVisualization() {
       </div>
 
       <Show when={expanded()}>
-        <Show when={enabled()} fallback={<div class="no-cards-message">Enable the scheduler (Ctrl+R) to see statistics</div>}>
+        <Show
+          when={enabled()}
+          fallback={
+            <div class="no-cards-message">Enable the scheduler (Ctrl+R) to see statistics</div>
+          }
+        >
           {/* Queue Overview */}
           <div class="srs-section">
-          <div class="section-title">Queue Overview</div>
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-label">Cards Due</div>
-              <div class="stat-value">{dueCards().length}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Current Position</div>
-              <div class="stat-value">
-                {currentCard()
-                  ? dueCards().findIndex((c) => c.cardId === currentCard()?.cardId) + 1
-                  : 0}
+            <div class="section-title">Queue Overview</div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-label">Cards Due</div>
+                <div class="stat-value">{dueCards().length}</div>
               </div>
-              <div class="stat-secondary">of {dueCards().length}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Daily Progress */}
-        <div class="srs-section">
-          <div class="section-title">Daily Progress</div>
-          <div style={{ display: "flex", "flex-direction": "column", gap: "1rem" }}>
-            <div class="progress-bar-container">
-              <div class="progress-bar-label">
-                <span>New Cards</span>
-                <span>
-                  {dailyProgress().newDone} / {dailyProgress().newLimit}
-                </span>
-              </div>
-              <div class="progress-bar-bg">
-                <div
-                  class={
-                    dailyProgress().newDone >= dailyProgress().newLimit
-                      ? "progress-bar-fill complete"
-                      : "progress-bar-fill"
-                  }
-                  style={{
-                    width: `${Math.min(100, (dailyProgress().newDone / dailyProgress().newLimit) * 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div class="progress-bar-container">
-              <div class="progress-bar-label">
-                <span>Reviews</span>
-                <span>
-                  {dailyProgress().reviewsDone} / {dailyProgress().reviewsLimit}
-                </span>
-              </div>
-              <div class="progress-bar-bg">
-                <div
-                  class={
-                    dailyProgress().reviewsDone >= dailyProgress().reviewsLimit
-                      ? "progress-bar-fill complete"
-                      : "progress-bar-fill"
-                  }
-                  style={{
-                    width: `${Math.min(100, (dailyProgress().reviewsDone / dailyProgress().reviewsLimit) * 100)}%`,
-                  }}
-                />
+              <div class="stat-card">
+                <div class="stat-label">Current Position</div>
+                <div class="stat-value">
+                  {currentCard()
+                    ? dueCards().findIndex((c) => c.cardId === currentCard()?.cardId) + 1
+                    : 0}
+                </div>
+                <div class="stat-secondary">of {dueCards().length}</div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Current Card State */}
-        <Show when={cardState()}>
-          {(state) => (
-            <div class="srs-section">
-              <div class="section-title">Current Card State</div>
-              <div class="card-info-grid">
-                <div class="info-item">
-                  <div class="info-label">Status</div>
-                  <div class="info-value">{state().isNew ? "New" : "Review"}</div>
+          {/* Daily Progress */}
+          <div class="srs-section">
+            <div class="section-title">Daily Progress</div>
+            <div style={{ display: "flex", "flex-direction": "column", gap: "1rem" }}>
+              <div class="progress-bar-container">
+                <div class="progress-bar-label">
+                  <span>New Cards</span>
+                  <span>
+                    {dailyProgress().newDone} / {dailyProgress().newLimit}
+                  </span>
                 </div>
-                <div class="info-item">
-                  <div class="info-label">Due In</div>
-                  <div class="info-value">{formatDueDate(state().due)}</div>
+                <div class="progress-bar-bg">
+                  <div
+                    class={
+                      dailyProgress().newDone >= dailyProgress().newLimit
+                        ? "progress-bar-fill complete"
+                        : "progress-bar-fill"
+                    }
+                    style={{
+                      width: `${Math.min(100, (dailyProgress().newDone / dailyProgress().newLimit) * 100)}%`,
+                    }}
+                  />
                 </div>
-                <div class="info-item">
-                  <div class="info-label">Ease Factor</div>
-                  <div class="info-value">{(state().easeFactor || 2.5).toFixed(2)}</div>
+              </div>
+
+              <div class="progress-bar-container">
+                <div class="progress-bar-label">
+                  <span>Reviews</span>
+                  <span>
+                    {dailyProgress().reviewsDone} / {dailyProgress().reviewsLimit}
+                  </span>
                 </div>
-                <div class="info-item">
-                  <div class="info-label">Interval</div>
-                  <div class="info-value">{(state().interval || 0).toFixed(1)}d</div>
+                <div class="progress-bar-bg">
+                  <div
+                    class={
+                      dailyProgress().reviewsDone >= dailyProgress().reviewsLimit
+                        ? "progress-bar-fill complete"
+                        : "progress-bar-fill"
+                    }
+                    style={{
+                      width: `${Math.min(100, (dailyProgress().reviewsDone / dailyProgress().reviewsLimit) * 100)}%`,
+                    }}
+                  />
                 </div>
-                <div class="info-item">
-                  <div class="info-label">Repetitions</div>
-                  <div class="info-value">{state().repetitions || 0}</div>
-                </div>
-                <div class="info-item">
-                  <div class="info-label">Card ID</div>
-                  <div class="info-value" style={{ "font-size": "0.7rem", opacity: 0.5 }}>
-                    {currentCard()?.cardId.split(":").slice(-2).join(":")}
+              </div>
+            </div>
+          </div>
+
+          {/* Current Card State */}
+          <Show when={cardState()}>
+            {(state) => (
+              <div class="srs-section">
+                <div class="section-title">Current Card State</div>
+                <div class="card-info-grid">
+                  <div class="info-item">
+                    <div class="info-label">Status</div>
+                    <div class="info-value">{state().isNew ? "New" : "Review"}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Due In</div>
+                    <div class="info-value">{formatDueDate(state().due)}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Ease Factor</div>
+                    <div class="info-value">{(state().easeFactor || 2.5).toFixed(2)}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Interval</div>
+                    <div class="info-value">{(state().interval || 0).toFixed(1)}d</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Repetitions</div>
+                    <div class="info-value">{state().repetitions || 0}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Card ID</div>
+                    <div class="info-value" style={{ "font-size": "0.7rem", opacity: 0.5 }}>
+                      {currentCard()?.cardId.split(":").slice(-2).join(":")}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-        </Show>
+            )}
+          </Show>
 
-        <Show when={!currentCard() && dueCards().length === 0}>
-          <div class="no-cards-message">
-            🎉 All done for today! No more cards due.
-          </div>
-        </Show>
+          <Show when={!currentCard() && dueCards().length === 0}>
+            <div class="no-cards-message">🎉 All done for today! No more cards due.</div>
+          </Show>
         </Show>
       </Show>
     </div>
