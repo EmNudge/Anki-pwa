@@ -18,6 +18,7 @@
     "@bokuweb/zstd-wasm": "^0.0.27",
     "@dweb-browser/zstd-wasm": "^1.2.1",
     "@mongodb-js/zstd": "^2.0.0",
+    "@open-spaced-repetition/sm-2": "^0.2.1",
     "@yu7400ki/zstd-wasm": "npm:@jsr/yu7400ki__zstd-wasm@^0.1.0",
     "@zip-js/zip-js": "npm:@jsr/zip-js__zip-js@^2.7.57",
     "katex": "^0.16.21",
