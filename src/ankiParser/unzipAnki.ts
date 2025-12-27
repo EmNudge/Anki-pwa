@@ -1,10 +1,11 @@
-import { BlobWriter, Entry, FileEntry, TextWriter } from "@zip-js/zip-js";
+import { BlobWriter, Entry, FileEntry } from "@zip-js/zip-js";
 import { ZipReader } from "@zip-js/zip-js";
 import { BlobReader } from "@zip-js/zip-js";
 import { isTruthy } from "../utils/assert";
 import { assertTruthy } from "../utils/assert";
 import mime from "mime";
 import { decompressZstd } from "../utils/zstd";
+import { parseMediaProto } from "./parseMediaProto";
 
 /**
  * Type guard to check if an Entry is a FileEntry (has getData method)
@@ -39,15 +40,37 @@ async function getFilesFromEntries(entries: Entry[]): Promise<Map<string, string
     throw new Error("media entry is not a file");
   }
 
-  const mediaFileText = await mediaFileEntry.getData(new TextWriter());
+  // Get media file as binary data first (newer formats use Zstandard compression)
+  const mediaFileBlob = await mediaFileEntry.getData(new BlobWriter());
+  const mediaFileBytes = new Uint8Array(await mediaFileBlob.arrayBuffer());
+
+  // Try to decompress if it's Zstandard compressed
+  let mediaFileText: string;
+  let decompressedBytes: Uint8Array;
+  try {
+    const decompressed = await decompressZstd(mediaFileBytes);
+    decompressedBytes = decompressed;
+    mediaFileText = new TextDecoder().decode(decompressed);
+  } catch (_e) {
+    // Not compressed, try as plain text
+    decompressedBytes = mediaFileBytes;
+    mediaFileText = new TextDecoder().decode(mediaFileBytes);
+  }
 
   const mediaFile = (() => {
     try {
+      // Try parsing as JSON first (older format)
       return JSON.parse(mediaFileText) as Record<number, string>;
       // eslint-disable-next-line no-unused-vars
-    } catch (_e) {
-      // Intentionally ignoring parse errors - return empty object on failure
-      return {};
+    } catch (_jsonError) {
+      // If JSON parsing fails, try parsing as Protocol Buffer (newer .anki21b format)
+      try {
+        return parseMediaProto(decompressedBytes);
+        // eslint-disable-next-line no-unused-vars
+      } catch (_protoError) {
+        // If both parsers fail, return empty object
+        return {};
+      }
     }
   })();
   const mediaFileMap = new Map(Object.entries(mediaFile));
