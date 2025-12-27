@@ -1,6 +1,12 @@
 import { Show, For, createSignal, createEffect, onCleanup } from "solid-js";
 import { css } from "solid-styled";
-import { commandPaletteOpenSig, setCommandPaletteOpenSig, type Command } from "../commandPaletteStore";
+import {
+  commandPaletteOpenSig,
+  setCommandPaletteOpenSig,
+  commandPaletteInitialParentSig,
+  openCommandPalette,
+  type Command,
+} from "../commandPaletteStore";
 import { FiSearch } from "solid-icons/fi";
 
 export function CommandPalette(props: { commands: Command[] }) {
@@ -290,7 +296,15 @@ export function CommandPalette(props: { commands: Command[] }) {
     if (commandPaletteOpenSig()) {
       setTimeout(() => inputRef()?.focus(), 0);
       setSearchQuery("");
-      setBreadcrumb([]);
+
+      // Set initial breadcrumb if specified
+      const initialParent = commandPaletteInitialParentSig();
+      if (initialParent) {
+        setBreadcrumb([initialParent]);
+      } else {
+        setBreadcrumb([]);
+      }
+
       setSelectedIndex(0);
     }
   });
@@ -372,7 +386,7 @@ export function CommandPalette(props: { commands: Command[] }) {
     const onKeydown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setCommandPaletteOpenSig(true);
+        openCommandPalette();
       }
     };
     window.addEventListener("keydown", onKeydown);
