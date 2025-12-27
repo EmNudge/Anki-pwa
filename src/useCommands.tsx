@@ -15,6 +15,8 @@ import {
   setSelectedDeckIdSig,
   selectedDeckIdSig,
   mediaFilesSig,
+  cardsSig,
+  selectedCardSig,
 } from "./stores";
 import type { Command } from "./commandPaletteStore";
 import {
@@ -31,6 +33,7 @@ import {
   FiClipboard,
   FiFile,
   FiGrid,
+  FiHash,
 } from "solid-icons/fi";
 import { css } from "solid-styled";
 import { getRenderedCardString } from "./utils/render";
@@ -74,6 +77,46 @@ export function useCommands() {
           setSelectedCardSig((prevCard) => prevCard + 1);
         },
       },
+      ...(!schedulerEnabledSig() && ankiData && cardsSig().length > 0
+        ? [
+            {
+              id: "jump-to-card",
+              title: "Jump to Card",
+              icon: <FiHash />,
+              hotkey: "ctrl+J",
+              children: cardsSig().map((card, index) => {
+                const firstFieldValue = Object.values(card.values)[0];
+                const raw = typeof firstFieldValue === "string" ? firstFieldValue : "";
+                const text = raw.replace(/<[^>]*>/g, "").trim();
+                const preview = text.length > 40 ? `${text.slice(0, 40)}...` : text;
+                const title = text ? `Card ${index + 1}: ${preview}` : `Card ${index + 1}`;
+                const isCurrentCard = selectedCardSig() === index;
+
+                return {
+                  id: `jump-card-${index}`,
+                  title,
+                  icon: <FiHash />,
+                  label: isCurrentCard ? "Currently viewing" : undefined,
+                  metadata: [
+                    { label: "Card Number", value: (index + 1).toString() },
+                    ...Object.entries(card.values).map(([fieldName, fieldValue]) => ({
+                      label: fieldName,
+                      value: (
+                        <div style={{ "white-space": "pre-wrap", "word-break": "break-word" }}>
+                          {fieldValue}
+                        </div>
+                      ),
+                    })),
+                    ...(card.deckName ? [{ label: "Deck", value: card.deckName }] : []),
+                  ],
+                  handler: () => {
+                    setSelectedCardSig(index);
+                  },
+                } satisfies Command;
+              }),
+            },
+          ]
+        : []),
       {
         id: "toggle-theme",
         title: "Toggle Theme",
