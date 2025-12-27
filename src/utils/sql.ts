@@ -14,10 +14,13 @@ export function executeQueryAll<T>(
   params?: Record<string, string>,
 ): T[] {
   const stmt = db.prepare(query);
-  const result: T[] = [];
-  while (stmt.step()) {
-    result.push(stmt.getAsObject(params) as T);
-  }
+  const rows = Array.from(
+    (function* () {
+      while (stmt.step()) {
+        yield stmt.getAsObject(params) as T;
+      }
+    })(),
+  );
   stmt.free();
-  return result;
+  return rows;
 }
