@@ -1,12 +1,12 @@
 import { css } from "solid-styled";
 import { Show, createMemo } from "solid-js";
-import { deckInfoSig, selectedDeckIdSig, templatesSig, selectedTemplateSig } from "../stores";
+import { deckInfoSig, selectedDeckIdSig, ankiDataSig } from "../stores";
 import { SidePanel } from "../design-system/components/layout/SidePanel";
 import { StatItem } from "../design-system/components/primitives/StatItem";
 import { openCommandPalette } from "../commandPaletteStore";
 import { FiChevronDown } from "solid-icons/fi";
 
-export function DeckInfo() {
+export function FileInfo() {
   // eslint-disable-next-line no-unused-expressions
   css`
     .deck-name {
@@ -95,6 +95,14 @@ export function DeckInfo() {
       color: var(--color-text-secondary);
       margin-bottom: var(--spacing-3);
     }
+
+    .browse-item {
+      margin-bottom: var(--spacing-2);
+    }
+
+    .browse-button {
+      margin-bottom: var(--spacing-4);
+    }
   `;
 
   const deckInfo = () => deckInfoSig();
@@ -108,25 +116,21 @@ export function DeckInfo() {
     return info.subdecks.find((subdeck) => subdeck.id === selectedId) ?? null;
   });
 
-  // Get the currently selected template
-  const selectedTemplate = createMemo(() => {
-    const templates = templatesSig();
-    const selectedIndex = selectedTemplateSig();
-    if (!templates || templates.length === 0) return null;
-
-    return templates[selectedIndex];
-  });
-
   // Get the total number of subdecks
   const deckCount = createMemo(() => {
     const info = deckInfo();
     return info?.subdecks.length ?? 0;
   });
 
-  // Get the total number of templates
-  const templateCount = createMemo(() => {
-    const templates = templatesSig();
-    return templates?.length ?? 0;
+  // All-notes and all-templates across file (not filtered by deck)
+  const allNotesCount = createMemo(() => ankiDataSig()?.cards.length ?? 0);
+  const allTemplatesCount = createMemo(() => {
+    const data = ankiDataSig();
+    if (!data) return 0;
+    const names = new Set(
+      data.cards.flatMap((card) => card.templates.map((t) => t.name)),
+    );
+    return names.size;
   });
 
   // Get the current deck name (either subdeck or "All Cards")
@@ -153,12 +157,11 @@ export function DeckInfo() {
     openCommandPalette("switch-deck");
   };
 
-  const handleChangeTemplate = () => {
-    openCommandPalette("select-template");
-  };
+  const handleBrowseAllNotes = () => openCommandPalette("browse-notes");
+  const handleBrowseAllTemplates = () => openCommandPalette("browse-templates");
 
   return (
-    <SidePanel title="Deck Info" maxWidth="300px">
+    <SidePanel title="File Info" maxWidth="300px">
       <h3 class="deck-name">{deckInfo()?.name}</h3>
 
       <Show when={deckInfo()?.subdecks && deckInfo()!.subdecks.length > 0}>
@@ -173,37 +176,34 @@ export function DeckInfo() {
             </div>
           </div>
           <button class="change-deck-button" onClick={handleChangeDeck} disabled={deckCount() <= 1}>
-            Change Deck
-            <FiChevronDown />
-          </button>
-        </div>
-      </Show>
-
-      <Show when={selectedTemplate()}>
-        <div class="current-deck-section">
-          <div class="current-deck-label">Current Template ({templateCount()})</div>
-          <div class="current-deck-display">
-            <div class="current-deck-name">
-              {selectedTemplate()?.name}
-            </div>
-          </div>
-          <button class="change-deck-button" onClick={handleChangeTemplate} disabled={templateCount() <= 1}>
-            Change Template
+            Select Deck
             <FiChevronDown />
           </button>
         </div>
       </Show>
 
       <div class="stats-section">
-        <div class="stats-title">Statistics</div>
-        <StatItem
-          label="Cards"
-          value={currentCardCount()}
-        />
-        <StatItem
-          label="Templates"
-          value={currentTemplateCount()}
-        />
+        <div class="stats-title">Browse</div>
+        <div class="browse-item">
+          <StatItem
+            label="All Notes"
+            value={allNotesCount()}
+          />
+        </div>
+        <button class="change-deck-button browse-button" onClick={handleBrowseAllNotes} disabled={allNotesCount() === 0}>
+          Browse All Notes
+          <FiChevronDown />
+        </button>
+        <div class="browse-item">
+          <StatItem
+            label="All Templates"
+            value={allTemplatesCount()}
+          />
+        </div>
+        <button class="change-deck-button" onClick={handleBrowseAllTemplates} disabled={allTemplatesCount() === 0}>
+          Browse All Templates
+          <FiChevronDown />
+        </button>
       </div>
     </SidePanel>
   );

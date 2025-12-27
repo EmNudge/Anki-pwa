@@ -268,6 +268,20 @@ export function CommandPalette(props: { commands: Command[] }) {
       font-weight: var(--font-weight-medium);
     }
 
+      .command-item-label {
+        display: inline-flex;
+        align-items: center;
+        padding: 0 var(--spacing-2);
+        height: 18px;
+        border-radius: var(--radius-sm);
+        background: var(--color-surface-elevated);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-2xs);
+        margin-left: var(--spacing-2);
+        white-space: nowrap;
+      }
+
     .command-item-title-highlight {
       background: var(--color-primary-100);
       color: var(--color-primary-700);
@@ -592,6 +606,9 @@ export function CommandPalette(props: { commands: Command[] }) {
                         <span class="command-item-icon">{cmd.icon}</span>
                       </Show>
                       <span class="command-item-title">{highlightMatch(cmd.title, searchQuery())}</span>
+                      <Show when={cmd.label}>
+                        <span class="command-item-label">{cmd.label}</span>
+                      </Show>
                     </div>
                     <Show when={cmd.children && cmd.children.length > 0}>
                       <span class="command-item-arrow">→</span>

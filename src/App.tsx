@@ -30,7 +30,7 @@ import {
 import { SRSVisualization } from "./components/SRSVisualization";
 import { SchedulerSettingsModal } from "./components/SchedulerSettings";
 import { CommandPalette } from "./components/CommandPalette";
-import { DeckInfo } from "./components/DeckInfo";
+import { FileInfo } from "./components/FileInfo";
 import { useCommands } from "./ninjaKeys";
 import { BackgroundWebGL } from "./components/BackgroundWebGL";
 import { backgroundFxEnabledSig } from "./stores";
@@ -249,8 +249,8 @@ function App() {
     <>
       {backgroundFxEnabledSig() && <BackgroundWebGL />}
       <main>
-        {/* LEFT COLUMN: Deck Info */}
-        <div class="layout-left-column">{deckInfoSig() && <DeckInfo />}</div>
+        {/* LEFT COLUMN: File Info */}
+        <div class="layout-left-column">{deckInfoSig() && <FileInfo />}</div>
 
         {/* CENTER COLUMN: Card */}
         <div class="layout-center-column">

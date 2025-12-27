@@ -1,9 +1,8 @@
-import { ankiCachePromise, cardsSig, setBlobSig } from "./stores";
+import { ankiCachePromise, setBlobSig } from "./stores";
 import { setSelectedCardSig } from "./stores";
-import { templatesSig } from "./stores";
 import { createMemo, JSX } from "solid-js";
-import { setSelectedTemplateSig } from "./stores";
 import {
+  ankiDataSig,
   schedulerEnabledSig,
   soundEffectsEnabledSig,
   toggleScheduler,
@@ -14,6 +13,7 @@ import {
   toggleBackgroundFx,
   deckInfoSig,
   setSelectedDeckIdSig,
+  selectedDeckIdSig,
 } from "./stores";
 import type { Command } from "./commandPaletteStore";
 import { openCommandPalette } from "./commandPaletteStore";
@@ -22,8 +22,14 @@ import { css } from "solid-styled";
 
 export function useCommands() {
   return createMemo<Command[]>(() => {
-    const templates = templatesSig();
     const deckInfo = deckInfoSig();
+    const ankiData = ankiDataSig();
+    const selectedDeckId = selectedDeckIdSig();
+    const currentDeckName = (() => {
+      if (!ankiData || !selectedDeckId) return null;
+      const deck = ankiData.decks[selectedDeckId];
+      return deck ? deck.name : null;
+    })();
 
     const commands: Command[] = [
       {
@@ -51,17 +57,6 @@ export function useCommands() {
         hotkey: ">",
         handler: () => {
           setSelectedCardSig((prevCard) => prevCard + 1);
-        },
-      },
-      {
-        id: "select-card",
-        title: "Select Card",
-        icon: <FiLayers />,
-        hotkey: "ctrl+S",
-        children: cardsSig().map((_card, index) => `Card ${index + 1}`),
-        handler: () => {
-          // When the user selects this, keep the command palette open for submenu selection.
-          return { keepOpen: true };
         },
       },
       {
@@ -160,96 +155,86 @@ export function useCommands() {
             })),
           ]
         : []),
-      ...cardsSig().map((card, index) => {
-        // Helper function to strip HTML tags and truncate text
-        const getPreviewText = (html: string | null, maxLength = 50) => {
-          if (!html) return "";
-          const text = html.replace(/<[^>]*>/g, "").trim();
-          return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
-        };
-
-        console.log('card values', card.values);
-
-        // Build metadata array with all card fields
-        const metadata = [
-          // Map all field values
-          ...Object.entries(card.values).map(([fieldName, fieldValue]) => ({
-            label: fieldName,
-            value: <div style={{ "white-space": "pre-wrap", "word-break": "break-word" }}>
-              {fieldValue}
-            </div>,
-          })),
-          // Add tags if present
-          ...(card.tags && card.tags.length > 0 ? [{
-            label: "Tags",
-            value: card.tags.join(", "),
-          }] : []),
-          // Add deck name if present
-          ...(card.deckName ? [{
-            label: "Deck",
-            value: card.deckName,
-          }] : []),
-          // Add template count
-          {
-            label: `Templates ${card.templates.length}`,
-            value: card.templates.map((template) => template.name).join(", "),
-          },
-        ];
-
-        // Create a more descriptive title using the first field value
-        const firstFieldValue = Object.values(card.values)[0];
-        const cardTitle = firstFieldValue
-          ? `Card ${index + 1}: ${getPreviewText(firstFieldValue, 30)}`
-          : `Card ${index + 1}`;
-
-        return {
-          id: `Card ${index + 1}`,
-          title: cardTitle,
-          icon: <FiLayers />,
-          parent: "select-card",
-          metadata,
-          handler: () => {
-            setSelectedCardSig(index);
-          },
-        };
-      }),
-      ...(templates
+      ...(ankiData
         ? [
             {
-              id: "select-template",
-              title: "Select Template",
-              icon: <FiClipboard />,
-              hotkey: "ctrl+L",
-              children: templates.map((template) => template.name),
+              id: "browse-notes",
+              title: "Browse All Notes",
+              icon: <FiLayers />,
+              children: ankiData.cards.map((_card, index) => `Note ${index + 1}`),
               handler: () => {
-                openCommandPalette("select-template");
                 return { keepOpen: true };
               },
             },
-            ...templates.map((template, index) => {
-              const frontHtml = template.qfmt;
-              const backHtml = template.afmt;
+            ...ankiData.cards.map((card, index) => {
+              const firstFieldValue = Object.values(card.values)[0];
+              const raw = typeof firstFieldValue === "string" ? firstFieldValue : "";
+              const text = raw.replace(/<[^>]*>/g, "").trim();
+              const preview = text.length > 30 ? `${text.slice(0, 30)}...` : text;
+              const title = text ? `Note ${index + 1}: ${preview}` : `Note ${index + 1}`;
+
+              const label = currentDeckName && card.deckName === currentDeckName ? "In current deck" : undefined;
+
+              const metadata = [
+                ...Object.entries(card.values).map(([fieldName, fieldValue]) => ({
+                  label: fieldName,
+                  value: <div style={{ "white-space": "pre-wrap", "word-break": "break-word" }}>{fieldValue}</div>,
+                })),
+                ...(card.deckName ? [{ label: "Deck", value: card.deckName }] : []),
+                { label: `Templates ${card.templates.length}`, value: card.templates.map((t) => t.name).join(", ") },
+              ];
 
               return {
-                id: template.name,
-                title: template.name,
-                icon: <FiFile />,
-                parent: "select-template",
-                metadata: [
-                  {
-                    label: "Template Front",
-                    value: <TemplateViewer templateHtml={frontHtml} />
-                  },
-                  {
-                    label: "Template Back",
-                    value: <TemplateViewer templateHtml={backHtml} />
-                  },
-                ],
+                id: `Note ${index + 1}`,
+                title,
+                icon: <FiLayers />,
+                parent: "browse-notes",
+                label,
+                metadata,
                 handler: () => {
-                  setSelectedTemplateSig(index);
+                  return { keepOpen: true };
                 },
-              };
+              } satisfies Command;
             }),
+            ...(() => {
+              const uniqueTemplates = Array.from(
+                (ankiData.cards.flatMap((c) => c.templates) ?? []).reduce<Map<string, { name: string; qfmt: string; afmt: string }>>(
+                  (acc, t) => (acc.has(t.name) ? acc : acc.set(t.name, t)),
+                  new Map(),
+                ).values(),
+              );
+              const currentDeckTemplateNames = new Set(
+                (currentDeckName ? ankiData.cards.filter((c) => c.deckName === currentDeckName) : []).flatMap((c) =>
+                  c.templates.map((t) => t.name),
+                ),
+              );
+
+              const items: Command[] = [
+                {
+                  id: "browse-templates",
+                  title: "Browse All Templates",
+                  icon: <FiClipboard />,
+                  hotkey: "ctrl+L",
+                  children: uniqueTemplates.map((t) => t.name),
+                  handler: () => {
+                    openCommandPalette("view-template");
+                    return { keepOpen: true };
+                  },
+                },
+                ...uniqueTemplates.map((t) => ({
+                  id: `AllTpl:${t.name}`,
+                  title: t.name,
+                  icon: <FiFile />,
+                  parent: "browse-templates",
+                  label: currentDeckName && currentDeckTemplateNames.has(t.name) ? "In current deck" : undefined,
+                  metadata: [
+                    { label: "Template Front", value: <TemplateViewer templateHtml={t.qfmt} /> },
+                    { label: "Template Back", value: <TemplateViewer templateHtml={t.afmt} /> },
+                  ],
+                })),
+              ];
+              return items;
+            })(),
           ]
         : []),
     ];
