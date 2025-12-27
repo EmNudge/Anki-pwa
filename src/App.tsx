@@ -1,9 +1,10 @@
 import "./App.css";
-import { createEffect, createMemo, createSignal } from "solid-js";
+import { createEffect, createMemo, createSignal, untrack } from "solid-js";
 import { Card, CardButtons } from "./components/Card";
 import type { Answer } from "./components/Card";
 import { css } from "solid-styled";
 import { getRenderedCardString } from "./utils/render";
+import { computeDeckInfo } from "./utils/deckInfo";
 import { FilePicker } from "./components/FilePicker";
 import {
   ankiCachePromise,
@@ -18,7 +19,6 @@ import {
   schedulerEnabledSig,
   schedulerSettingsModalOpenSig,
   selectedCardSig,
-  selectedDeckIdSig,
   selectedTemplateSig,
   setBlobSig,
   setDeckInfoSig,
@@ -26,7 +26,6 @@ import {
   setSelectedCardSig,
   setSelectedDeckIdSig,
   templatesSig,
-  type SubDeckInfo,
 } from "./stores";
 import { SRSVisualization } from "./components/SRSVisualization";
 import { SchedulerSettingsModal } from "./components/SchedulerSettings";
@@ -124,82 +123,25 @@ function App() {
   const [reviewStartTime, setReviewStartTime] = createSignal<number>(Date.now());
   const commands = useCommands();
 
-  // Automatically populate deck info when deck is loaded
-  createEffect(() => {
+  // Compute deck info from anki data (pure derived state)
+  const computedDeckInfo = createMemo(() => {
     const ankiData = ankiDataSig();
-    if (ankiData) {
-      // Calculate stats for each subdeck
-      const subdeckStats = new Map<string, { cardCount: number; templates: Set<string> }>();
+    return ankiData ? computeDeckInfo(ankiData) : null;
+  });
 
-      // Initialize all decks with zero counts
-      Object.entries(ankiData.decks).forEach(([deckId]) => {
-        subdeckStats.set(deckId, { cardCount: 0, templates: new Set() });
-      });
-
-      // Count cards and templates per deck
-      ankiData.cards.forEach((card) => {
-        // Find the deck ID for this card by matching the deckName
-        const deckEntry = Object.entries(ankiData.decks).find(
-          ([_, deck]) => deck.name === card.deckName,
-        );
-
-        if (deckEntry) {
-          const [deckId] = deckEntry;
-          const stats = subdeckStats.get(deckId);
-          if (stats) {
-            stats.cardCount++;
-            card.templates.forEach((template) => stats.templates.add(template.name));
-          }
-        }
-      });
-
-      // Build subdeck info array
-      const subdecks: SubDeckInfo[] = Object.entries(ankiData.decks)
-        .map(([deckId, deck]) => {
-          const stats = subdeckStats.get(deckId);
-          return {
-            id: deckId,
-            name: deck.name,
-            cardCount: stats?.cardCount ?? 0,
-            templateCount: stats?.templates.size ?? 0,
-          };
-        })
-        .filter((subdeck) => subdeck.cardCount > 0); // Only show decks with cards
-
-      // Calculate totals
-      const totalCardCount = ankiData.cards.length;
-      const uniqueTemplates = new Set(
-        ankiData.cards.flatMap((card) => card.templates.map((template) => template.name)),
-      );
-
-      // If the deck name is "Default", try to extract a better name from subdecks
-      let displayName = ankiData.deckName;
-      if (displayName === "Default" && subdecks.length > 0) {
-        // Find common parent from subdeck names (before the first "::")
-        const parentNames = subdecks
-          .map((subdeck) => {
-            const parts = subdeck.name.split("::");
-            return parts.length > 1 ? parts[0] : null;
-          })
-          .filter((name): name is string => name !== null);
-
-        // If all subdecks share a common parent, use that as the display name
-        if (parentNames.length > 0 && parentNames.every((name) => name === parentNames[0])) {
-          displayName = parentNames[0]!;
-        }
-      }
-
-      const deckInfo = {
-        name: displayName,
-        cardCount: totalCardCount,
-        templateCount: uniqueTemplates.size,
-        subdecks,
-      };
+  // Sync computed deck info to global signal and handle initial deck selection
+  createEffect(() => {
+    const deckInfo = computedDeckInfo();
+    if (deckInfo) {
+      // Use untrack to read previous deck info without creating a dependency
+      const previousDeckInfo = untrack(() => deckInfoSig());
       setDeckInfoSig(deckInfo);
 
-      // Set initial selected deck to the first subdeck if available
-      if (subdecks.length > 0 && selectedDeckIdSig() === null) {
-        setSelectedDeckIdSig(subdecks[0]!.id);
+      // Only set initial selected deck when loading a new deck (not when user selects "All Cards")
+      // Check if this is a new deck by comparing the deck name
+      const isNewDeck = !previousDeckInfo || previousDeckInfo.name !== deckInfo.name;
+      if (isNewDeck && deckInfo.subdecks.length > 0) {
+        setSelectedDeckIdSig(deckInfo.subdecks[0]!.id);
       }
     }
   });

@@ -129,6 +129,26 @@ export function DeckInfo() {
     return templates?.length ?? 0;
   });
 
+  // Get the current deck name (either subdeck or "All Cards")
+  const currentDeckName = createMemo(() => {
+    const subdeck = selectedSubdeck();
+    return subdeck?.name ?? "All Cards";
+  });
+
+  // Get the current card count
+  const currentCardCount = createMemo(() => {
+    const subdeck = selectedSubdeck();
+    const info = deckInfo();
+    return subdeck?.cardCount ?? info?.cardCount ?? 0;
+  });
+
+  // Get the current template count
+  const currentTemplateCount = createMemo(() => {
+    const subdeck = selectedSubdeck();
+    const info = deckInfo();
+    return subdeck?.templateCount ?? info?.templateCount ?? 0;
+  });
+
   const handleChangeDeck = () => {
     openCommandPalette("switch-deck");
   };
@@ -146,11 +166,10 @@ export function DeckInfo() {
           <div class="current-deck-label">Current Deck ({deckCount()})</div>
           <div class="current-deck-display">
             <div class="current-deck-name">
-              {selectedSubdeck()?.name ?? "All Cards"}
+              {currentDeckName()}
             </div>
             <div class="current-deck-stats">
-              {selectedSubdeck()?.cardCount ?? deckInfo()?.cardCount ?? 0} cards •{" "}
-              {selectedSubdeck()?.templateCount ?? deckInfo()?.templateCount ?? 0} templates
+              {currentCardCount()} cards • {currentTemplateCount()} templates
             </div>
           </div>
           <button class="change-deck-button" onClick={handleChangeDeck} disabled={deckCount() <= 1}>
@@ -179,11 +198,11 @@ export function DeckInfo() {
         <div class="stats-title">Statistics</div>
         <StatItem
           label="Cards"
-          value={selectedSubdeck()?.cardCount ?? deckInfo()?.cardCount ?? 0}
+          value={currentCardCount()}
         />
         <StatItem
           label="Templates"
-          value={selectedSubdeck()?.templateCount ?? deckInfo()?.templateCount ?? 0}
+          value={currentTemplateCount()}
         />
       </div>
     </SidePanel>
