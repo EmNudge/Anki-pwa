@@ -21,7 +21,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "identify": "tsx cli/identify.ts"
+    "identify": "tsx cli/identify.ts",
+    "inspect": "tsx cli/inspectCards.ts"
   },
   "dependencies": {
     "@dweb-browser/zstd-wasm": "^1.2.1",

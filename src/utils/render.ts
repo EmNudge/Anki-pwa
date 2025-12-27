@@ -59,7 +59,7 @@ function replaceLatex(renderedString: string) {
 function replaceTemplatingSyntax(renderedString: string) {
   return renderedString
     .replace(/\[sound:(.+?)\]/g, (_match, filename) => {
-      return `<audio src="${filename}" controls />`;
+      return `<audio src="${filename}" controls></audio>`;
     })
     .replace(/(\w+)\[(\w+)\]/g, (_match, rubyBase, rubyText) => {
       return `<ruby>${rubyBase}<rt>${rubyText}</rt></ruby>`;
