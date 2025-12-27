@@ -26,9 +26,14 @@ export function computeDeckInfo(ankiData: AnkiData) {
         cardsInDeck.flatMap((item) => item.card.templates.map((t) => t.name)),
       );
 
+      // Extract just the last segment after the final "::" for display
+      const displayName = deck.name.includes("::")
+        ? deck.name.split("::").pop()!
+        : deck.name;
+
       return {
         id: deckId,
-        name: deck.name,
+        name: displayName,
         cardCount: cardsInDeck.length,
         templateCount: templateNames.size,
       };

@@ -14,11 +14,13 @@ import {
   deckInfoSig,
   setSelectedDeckIdSig,
   selectedDeckIdSig,
+  mediaFilesSig,
 } from "./stores";
 import type { Command } from "./commandPaletteStore";
 import { openCommandPalette } from "./commandPaletteStore";
 import { FiFolder, FiArrowRight, FiLayers, FiMoon, FiVolume2, FiVolumeX, FiPause, FiPlay, FiSettings, FiRefreshCw, FiClipboard, FiFile, FiGrid } from "solid-icons/fi";
 import { css } from "solid-styled";
+import { getRenderedCardString } from "./utils/render";
 
 export function useCommands() {
   return createMemo<Command[]>(() => {
@@ -114,7 +116,7 @@ export function useCommands() {
           resetScheduler();
         },
       },
-      ...(deckInfo && deckInfo.subdecks.length > 0
+      ...(deckInfo && deckInfo.subdecks.length > 0 && ankiData
         ? [
             {
               id: "switch-deck",
@@ -132,27 +134,79 @@ export function useCommands() {
               title: "All Cards",
               icon: <FiLayers />,
               parent: "switch-deck",
-              metadata: [
-                { label: "Cards", value: deckInfo.cardCount.toString() },
-                { label: "Templates", value: deckInfo.templateCount.toString() },
-              ],
+              label: selectedDeckId === null ? "Currently selected" : undefined,
+              metadata: (() => {
+                // Get all unique template names from all cards
+                const allTemplateNames = Array.from(
+                  new Set(ankiData.cards.flatMap((c) => c.templates.map((t) => t.name)))
+                );
+
+                // Get first card for preview
+                const firstCard = ankiData.cards[0];
+                let cardPreview = null;
+                if (firstCard && firstCard.templates.length > 0) {
+                  const firstTemplate = firstCard.templates[0];
+                  if (firstTemplate) {
+                    const renderedFront = getRenderedCardString({
+                      templateString: firstTemplate.qfmt,
+                      variables: firstCard.values,
+                      mediaFiles: mediaFilesSig(),
+                    });
+                    cardPreview = <CardPreview cardHtml={renderedFront} />;
+                  }
+                }
+
+                return [
+                  { label: "Cards", value: deckInfo.cardCount.toString() },
+                  { label: "Templates", value: allTemplateNames.join(", ") },
+                  ...(cardPreview ? [{ label: "Example Card", value: cardPreview }] : []),
+                ];
+              })(),
               handler: () => {
                 setSelectedDeckIdSig(null);
               },
             },
-            ...deckInfo.subdecks.map((subdeck) => ({
-              id: subdeck.id,
-              title: subdeck.name,
-              icon: <FiLayers />,
-              parent: "switch-deck",
-              metadata: [
-                { label: "Cards", value: subdeck.cardCount.toString() },
-                { label: "Templates", value: subdeck.templateCount.toString() },
-              ],
-              handler: () => {
-                setSelectedDeckIdSig(subdeck.id);
-              },
-            })),
+            ...deckInfo.subdecks.map((subdeck) => {
+              // Get template names for this specific subdeck
+              const subdeckCards = ankiData.cards.filter((c) => {
+                const deck = ankiData.decks[subdeck.id];
+                return deck && c.deckName === deck.name;
+              });
+              const templateNames = Array.from(
+                new Set(subdeckCards.flatMap((c) => c.templates.map((t) => t.name)))
+              );
+
+              // Get first card from subdeck for preview
+              const firstCard = subdeckCards[0];
+              let cardPreview = null;
+              if (firstCard && firstCard.templates.length > 0) {
+                const firstTemplate = firstCard.templates[0];
+                if (firstTemplate) {
+                  const renderedFront = getRenderedCardString({
+                    templateString: firstTemplate.qfmt,
+                    variables: firstCard.values,
+                    mediaFiles: mediaFilesSig(),
+                  });
+                  cardPreview = <CardPreview cardHtml={renderedFront} />;
+                }
+              }
+
+              return {
+                id: subdeck.id,
+                title: subdeck.name,
+                icon: <FiLayers />,
+                parent: "switch-deck",
+                label: selectedDeckId === subdeck.id ? "Currently selected" : undefined,
+                metadata: [
+                  { label: "Cards", value: subdeck.cardCount.toString() },
+                  { label: "Templates", value: templateNames.join(", ") || "None" },
+                  ...(cardPreview ? [{ label: "Example Card", value: cardPreview }] : []),
+                ],
+                handler: () => {
+                  setSelectedDeckIdSig(subdeck.id);
+                },
+              };
+            }),
           ]
         : []),
       ...(ankiData
@@ -263,6 +317,72 @@ const TemplateViewer = (props: { templateHtml: string }) => {
   `;
 
   return <div class="metadata-value-code">{highlightedHtml}</div>;
+}
+
+const CardPreview = (props: { cardHtml: string }) => {
+  // eslint-disable-next-line no-unused-expressions
+  css`
+    .card-preview-container {
+      display: flex;
+      justify-content: center;
+      padding: var(--spacing-2);
+    }
+
+    .card-preview {
+      border: 2px solid var(--color-border);
+      background: var(--color-surface);
+      box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-4);
+      width: 100%;
+      max-width: 350px;
+      min-height: 200px;
+      position: relative;
+      overflow: hidden;
+      border-top-color: var(--color-primary);
+      font-size: var(--font-size-sm);
+    }
+
+    .card-preview-badge {
+      display: inline-block;
+      padding: var(--spacing-0-5) var(--spacing-2);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-semibold);
+      border-radius: 0 0 var(--radius-sm) 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0.3;
+      background: var(--color-primary);
+      color: white;
+    }
+
+    .card-preview-content {
+      padding-top: var(--spacing-4);
+    }
+
+    .card-preview-content :global(img) {
+      max-height: 150px;
+      max-width: 100%;
+      margin: 0 auto;
+      display: block;
+    }
+
+    .card-preview-content :global(h1) {
+      margin: 0;
+      font-weight: var(--font-weight-normal);
+      font-size: var(--font-size-lg);
+    }
+  `;
+
+  return (
+    <div class="card-preview-container">
+      <div class="card-preview">
+        <div class="card-preview-badge">Front</div>
+        <div class="card-preview-content" innerHTML={props.cardHtml} />
+      </div>
+    </div>
+  );
 }
 
 
