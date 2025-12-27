@@ -269,7 +269,6 @@ function App() {
 
     if (side === "front") {
       const audioFilenames = getAudioFilenames(card.frontSideHtml);
-      console.log("playing audioFilenames", audioFilenames);
       for (const filename of audioFilenames) {
         new Audio(filename).play();
       }
@@ -304,8 +303,6 @@ function App() {
     return queue.getNextIntervals(reviewCard);
   });
 
-  console.log("App rendering, deckInfoSig:", deckInfoSig());
-
   return (
     <>
       {backgroundFxEnabledSig() && <BackgroundWebGL />}
@@ -317,7 +314,6 @@ function App() {
         <div class="layout-center-column">
           {(() => {
             const card = renderedCard();
-            console.log("rendering card, card:", card);
             if (!card) {
               return cardsSig().length === 0 ? (
                 <FilePicker

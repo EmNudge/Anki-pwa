@@ -9,6 +9,10 @@ export interface Command {
   parent?: string;
   children?: string[];
   handler?: () => void | { keepOpen: boolean };
+  metadata?: {
+    label: string;
+    value: string | JSX.Element;
+  }[];
 }
 
 const [commandPaletteOpenSig, setCommandPaletteOpenSig] = createSignal(false);

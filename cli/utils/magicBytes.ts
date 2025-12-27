@@ -2,7 +2,7 @@
  * Magic byte detection utilities for identifying file formats
  */
 
-export type FileFormat =
+type FileFormat =
   | { type: 'zip'; description: 'ZIP archive (.apkg/.colpkg)' }
   | { type: 'sqlite3'; description: 'SQLite 3 database (.anki2/.anki21)' }
   | { type: 'zstd'; description: 'Zstandard compressed (.anki21b)' }

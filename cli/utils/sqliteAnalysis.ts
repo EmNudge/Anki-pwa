@@ -1,6 +1,6 @@
 import type { Database } from 'sql.js';
 
-export type AnkiVersion = {
+type AnkiVersion = {
   era: 'Anki 1.x' | 'Anki 2.0/2.1 (Legacy)' | 'Anki 2.1 (Modern)' | 'Anki 2.1+ (Current)';
   collectionVersion: number;
   schemaModTime: number;
