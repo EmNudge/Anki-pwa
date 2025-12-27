@@ -92,8 +92,6 @@ export class ReviewQueue {
    * @param templatesPerCard Number of templates for each card (assumes all cards have same templates)
    */
   async buildQueue(totalCards: number, templatesPerCard: number): Promise<ReviewCard[]> {
-    const queue: ReviewCard[] = [];
-
     // Get existing review states
     const existingStates = await reviewDB.getCardsForDeck(this.deckId);
     const stateMap = new Map<string, CardReviewState>(
@@ -102,38 +100,32 @@ export class ReviewQueue {
 
     const now = new Date();
 
-    // Generate cards for all card/template combinations
-    for (let cardIndex = 0; cardIndex < totalCards; cardIndex++) {
-      for (let templateIndex = 0; templateIndex < templatesPerCard; templateIndex++) {
+    // Generate cards for all card/template combinations immutably
+    return Array.from({ length: totalCards }, (_, cardIndex) =>
+      Array.from({ length: templatesPerCard }, (_, templateIndex) => {
         const cardId = this.generateCardId(cardIndex, templateIndex);
-        let reviewState = stateMap.get(cardId);
-        let isNew = false;
-
-        // Create new review state if it doesn't exist
-        if (!reviewState) {
-          const cardState = this.algorithm.createCard();
-          reviewState = {
+        const existing = stateMap.get(cardId);
+        const isNew = !existing;
+        const reviewState: CardReviewState =
+          existing ??
+          {
             cardId,
             deckId: this.deckId,
             algorithm: this.settings.algorithm,
-            cardState,
+            cardState: this.algorithm.createCard(),
             createdAt: now.getTime(),
             lastReviewed: null,
           };
-          isNew = true;
-        }
 
-        queue.push({
+        return {
           cardId,
           cardIndex,
           templateIndex,
           reviewState,
           isNew,
-        });
-      }
-    }
-
-    return queue;
+        };
+      }),
+    ).flat();
   }
 
   /**
@@ -141,54 +133,47 @@ export class ReviewQueue {
    */
   getDueCards(queue: ReviewCard[]): ReviewCard[] {
     const now = new Date();
-    const dueCards: ReviewCard[] = [];
-    const extraCards: ReviewCard[] = [];
-
-    let newCardsShown = this.todayStats.newCount;
-    let reviewCardsShown = this.todayStats.reviewCount;
-
-    for (const card of queue) {
-      try {
-        const dueDate = this.algorithm.getDueDate(card.reviewState.cardState);
-        const isDue = dueDate <= now;
-
-        if (card.isNew) {
-          // New cards - respect daily limit, but save extras
-          if (newCardsShown < this.settings.dailyNewLimit) {
-            dueCards.push(card);
-            newCardsShown++;
-          } else {
-            extraCards.push(card);
-          }
-        } else if (isDue) {
-          // Due review cards - respect daily limit, but save extras
-          if (reviewCardsShown < this.settings.dailyReviewLimit) {
-            dueCards.push(card);
-            reviewCardsShown++;
-          } else {
-            extraCards.push(card);
-          }
-        } else if (
-          this.settings.showAheadOfSchedule &&
-          reviewCardsShown >= this.settings.dailyReviewLimit
-        ) {
-          // Ahead of schedule reviews (if enabled and review limit reached)
-          dueCards.push(card);
+    const safe = queue
+      .map((card) => {
+        try {
+          const dueDate = this.algorithm.getDueDate(card.reviewState.cardState);
+          const isDue = dueDate <= now;
+          return { card, isDue };
+        } catch (error) {
+          console.error("Error processing card in queue:", error, card);
+          return null;
         }
-      } catch (error) {
-        console.error("Error processing card in queue:", error, card);
-        // Skip cards that fail to parse
-      }
-    }
+      })
+      .filter((x): x is { card: ReviewCard; isDue: boolean } => Boolean(x));
 
-    // If we've hit the limits but want to continue reviewing, add extra cards
-    // This allows wrapping around and continuous practice
-    if (dueCards.length > 0 && extraCards.length > 0) {
-      dueCards.push(...extraCards);
-    }
+    const newLeft = Math.max(0, this.settings.dailyNewLimit - this.todayStats.newCount);
+    const reviewLeft = Math.max(
+      0,
+      this.settings.dailyReviewLimit - this.todayStats.reviewCount,
+    );
 
-    // Sort: new cards first, then by due date
-    return dueCards.sort((a, b) => {
+    const newCandidates = safe.filter((x) => x.card.isNew).map((x) => x.card);
+    const dueReviewCandidates = safe.filter((x) => !x.card.isNew && x.isDue).map((x) => x.card);
+    const aheadCandidates = safe
+      .filter((x) => !x.card.isNew && !x.isDue)
+      .map((x) => x.card);
+
+    const selectedNew = newCandidates.slice(0, newLeft);
+    const extraNew = newCandidates.slice(newLeft);
+
+    const selectedReviews = dueReviewCandidates.slice(0, reviewLeft);
+    const extraReviews = dueReviewCandidates.slice(reviewLeft);
+
+    const includeAhead =
+      this.settings.showAheadOfSchedule && reviewLeft <= 0 ? aheadCandidates : [];
+
+    const coreDue = [...selectedNew, ...selectedReviews, ...includeAhead];
+    const extras = [...extraNew, ...extraReviews];
+
+    const finalDue =
+      coreDue.length > 0 && extras.length > 0 ? [...coreDue, ...extras] : coreDue;
+
+    return finalDue.sort((a, b) => {
       if (a.isNew && !b.isNew) return -1;
       if (!a.isNew && b.isNew) return 1;
 

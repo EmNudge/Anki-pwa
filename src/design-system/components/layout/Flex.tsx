@@ -144,16 +144,18 @@ export function Flex(props: FlexProps) {
     }
   `;
 
-  const classes = () => {
-    const classList: string[] = ["ds-flex"];
-    classList.push(`ds-flex--dir-${direction()}`);
-    classList.push(`ds-flex--gap-${gap()}`);
-    if (local.align) classList.push(`ds-flex--align-${local.align}`);
-    if (local.justify) classList.push(`ds-flex--justify-${local.justify}`);
-    if (local.wrap) classList.push("ds-flex--wrap");
-    if (local.class) classList.push(local.class);
-    return classList.join(" ");
-  };
+  const classes = () =>
+    [
+      "ds-flex",
+      `ds-flex--dir-${direction()}`,
+      `ds-flex--gap-${gap()}`,
+      local.align ? `ds-flex--align-${local.align}` : undefined,
+      local.justify ? `ds-flex--justify-${local.justify}` : undefined,
+      local.wrap ? "ds-flex--wrap" : undefined,
+      local.class,
+    ]
+      .filter(Boolean)
+      .join(" ");
 
   return (
     <div class={classes()} {...others}>

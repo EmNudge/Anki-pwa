@@ -24,11 +24,7 @@ export function Label(props: LabelProps) {
     }
   `;
 
-  const classes = () => {
-    const classList: string[] = ["ds-label"];
-    if (local.class) classList.push(local.class);
-    return classList.join(" ");
-  };
+  const classes = () => ["ds-label", local.class].filter(Boolean).join(" ");
 
   return (
     <label class={classes()} {...others}>

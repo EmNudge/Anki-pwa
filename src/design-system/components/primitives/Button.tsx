@@ -161,12 +161,15 @@ export function Button(props: ButtonProps) {
   `;
 
   const classes = () => {
-    const classList: string[] = ["ds-button"];
-    classList.push(`ds-button--${variant()}`);
-    classList.push(`ds-button--${size()}`);
-    if (local.fullWidth) classList.push("ds-button--full-width");
-    if (local.class) classList.push(local.class);
-    return classList.join(" ");
+    return [
+      "ds-button",
+      `ds-button--${variant()}`,
+      `ds-button--${size()}`,
+      local.fullWidth ? "ds-button--full-width" : undefined,
+      local.class,
+    ]
+      .filter(Boolean)
+      .join(" ");
   };
 
   return (

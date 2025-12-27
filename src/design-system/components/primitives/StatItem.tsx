@@ -32,11 +32,7 @@ export function StatItem(props: StatItemProps) {
     }
   `;
 
-  const classes = () => {
-    const classList: string[] = ["ds-stat-item"];
-    if (local.class) classList.push(local.class);
-    return classList.join(" ");
-  };
+  const classes = () => ["ds-stat-item", local.class].filter(Boolean).join(" ");
 
   return (
     <div class={classes()} {...others}>

@@ -61,13 +61,10 @@ export function Card(props: CardProps) {
     }
   `;
 
-  const classes = () => {
-    const classList: string[] = ["ds-card"];
-    classList.push(`ds-card--${variant()}`);
-    classList.push(`ds-card--padding-${padding()}`);
-    if (local.class) classList.push(local.class);
-    return classList.join(" ");
-  };
+  const classes = () =>
+    ["ds-card", `ds-card--${variant()}`, `ds-card--padding-${padding()}`, local.class]
+      .filter(Boolean)
+      .join(" ");
 
   return (
     <div class={classes()} {...others}>

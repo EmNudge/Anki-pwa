@@ -46,11 +46,7 @@ export function SidePanel(props: SidePanelProps) {
     }
   `;
 
-  const classes = () => {
-    const classList: string[] = ["ds-side-panel"];
-    if (local.class) classList.push(local.class);
-    return classList.join(" ");
-  };
+  const classes = () => ["ds-side-panel", local.class].filter(Boolean).join(" ");
 
   return (
     <div class={classes()} style={{ "max-width": maxWidth() }} {...others}>

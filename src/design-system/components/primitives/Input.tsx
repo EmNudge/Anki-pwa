@@ -18,7 +18,7 @@ export function Input(props: InputProps) {
     "id",
   ]);
 
-  const inputId = () => local.id ?? `input-${Math.random().toString(36).substr(2, 9)}`;
+  const inputId = () => local.id ?? `input-${Math.random().toString(36).slice(2, 11)}`;
 
   // eslint-disable-next-line no-unused-expressions
   css`
@@ -87,12 +87,10 @@ export function Input(props: InputProps) {
     }
   `;
 
-  const inputClasses = () => {
-    const classList: string[] = ["ds-input"];
-    if (local.error) classList.push("ds-input--error");
-    if (local.class) classList.push(local.class);
-    return classList.join(" ");
-  };
+  const inputClasses = () =>
+    ["ds-input", local.error ? "ds-input--error" : undefined, local.class]
+      .filter(Boolean)
+      .join(" ");
 
   return (
     <div class="ds-input-wrapper">
