@@ -48,6 +48,17 @@ export function toggleSoundEffects() {
   localStorage.setItem("soundEffectsEnabled", newValue.toString());
 }
 
+// Background FX (WebGL) toggle - disabled by default
+export const [backgroundFxEnabledSig, setBackgroundFxEnabledSig] = createSignal(
+  localStorage.getItem("backgroundFxEnabled") === "true",
+);
+
+export function toggleBackgroundFx() {
+  const newValue = !backgroundFxEnabledSig();
+  setBackgroundFxEnabledSig(newValue);
+  localStorage.setItem("backgroundFxEnabled", newValue.toString());
+}
+
 // Scheduler and review queue state
 export const [schedulerEnabledSig, setSchedulerEnabledSig] = createSignal(
   localStorage.getItem("schedulerEnabled") === "true",

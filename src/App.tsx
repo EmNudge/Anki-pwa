@@ -30,11 +30,16 @@ import { SchedulerSettingsModal } from "./components/SchedulerSettings";
 import { CommandPalette } from "./components/CommandPalette";
 import { DeckInfo } from "./components/DeckInfo";
 import { useCommands } from "./ninjaKeys";
+import { BackgroundWebGL } from "./components/BackgroundWebGL";
+import { backgroundFxEnabledSig } from "./stores";
+import { triggerPositiveBurst } from "./utils/fxBus";
 
 function App() {
   // eslint-disable-next-line no-unused-expressions
   css`
     main {
+      position: relative;
+      z-index: 1;
       display: grid;
       grid-template-columns: 300px 1fr 400px;
       gap: var(--spacing-4);
@@ -207,6 +212,7 @@ function App() {
 
   return (
     <>
+      {backgroundFxEnabledSig() && <BackgroundWebGL />}
       <main>
         {/* LEFT COLUMN: Deck Info */}
         <div class="layout-left-column">{deckInfoSig() && <DeckInfo />}</div>
@@ -241,6 +247,9 @@ function App() {
                     setReviewStartTime(Date.now());
                   }}
                   onChooseAnswer={async (answer: Answer) => {
+                    if (answer === "good" || answer === "easy") {
+                      triggerPositiveBurst(answer);
+                    }
                     if (schedulerEnabledSig()) {
                       // Scheduler mode: process review
                       const reviewCard = currentReviewCardSig();
@@ -268,6 +277,9 @@ function App() {
                     setReviewStartTime(Date.now());
                   }}
                   onChooseAnswer={async (answer: Answer) => {
+                    if (answer === "good" || answer === "easy") {
+                      triggerPositiveBurst(answer);
+                    }
                     if (schedulerEnabledSig()) {
                       // Scheduler mode: process review
                       const reviewCard = currentReviewCardSig();
