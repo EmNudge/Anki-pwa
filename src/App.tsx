@@ -120,12 +120,9 @@ function App() {
     const ankiData = ankiDataSig();
     if (ankiData) {
       // Count unique templates across all cards
-      const uniqueTemplates = new Set<string>();
-      ankiData.cards.forEach((card) => {
-        card.templates.forEach((template) => {
-          uniqueTemplates.add(template.name);
-        });
-      });
+      const uniqueTemplates = new Set(
+        ankiData.cards.flatMap((card) => card.templates.map((template) => template.name)),
+      );
 
       const deckInfo = {
         name: ankiData.deckName,

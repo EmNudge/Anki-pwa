@@ -126,16 +126,18 @@ export function Stack(props: StackProps) {
     }
   `;
 
-  const classes = () => {
-    const classList: string[] = ["ds-stack"];
-    classList.push(`ds-stack--${direction()}`);
-    classList.push(`ds-stack--spacing-${spacing()}`);
-    if (local.align) classList.push(`ds-stack--align-${local.align}`);
-    if (local.justify) classList.push(`ds-stack--justify-${local.justify}`);
-    if (local.wrap) classList.push("ds-stack--wrap");
-    if (local.class) classList.push(local.class);
-    return classList.join(" ");
-  };
+  const classes = () =>
+    [
+      "ds-stack",
+      `ds-stack--${direction()}`,
+      `ds-stack--spacing-${spacing()}`,
+      local.align ? `ds-stack--align-${local.align}` : undefined,
+      local.justify ? `ds-stack--justify-${local.justify}` : undefined,
+      local.wrap ? "ds-stack--wrap" : undefined,
+      local.class,
+    ]
+      .filter(Boolean)
+      .join(" ");
 
   return (
     <div class={classes()} {...others}>

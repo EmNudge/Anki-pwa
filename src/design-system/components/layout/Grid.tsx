@@ -93,13 +93,10 @@ export function Grid(props: GridProps) {
     }
   `;
 
-  const classes = () => {
-    const classList: string[] = ["ds-grid"];
-    classList.push(`ds-grid--cols-${columns()}`);
-    classList.push(`ds-grid--gap-${gap()}`);
-    if (local.class) classList.push(local.class);
-    return classList.join(" ");
-  };
+  const classes = () =>
+    ["ds-grid", `ds-grid--cols-${columns()}`, `ds-grid--gap-${gap()}`, local.class]
+      .filter(Boolean)
+      .join(" ");
 
   return (
     <div class={classes()} {...others}>

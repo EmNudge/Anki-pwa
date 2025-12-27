@@ -51,16 +51,14 @@ export class FSRSAlgorithm implements SchedulingAlgorithm {
     const recordLog = this.fsrs.repeat(card, now);
 
     // Get the appropriate scheduling info based on rating
-    let result;
-    if (rating === Rating.Again) {
-      result = recordLog[Rating.Again];
-    } else if (rating === Rating.Hard) {
-      result = recordLog[Rating.Hard];
-    } else if (rating === Rating.Good) {
-      result = recordLog[Rating.Good];
-    } else {
-      result = recordLog[Rating.Easy];
-    }
+    const result =
+      rating === Rating.Again
+        ? recordLog[Rating.Again]
+        : rating === Rating.Hard
+          ? recordLog[Rating.Hard]
+          : rating === Rating.Good
+            ? recordLog[Rating.Good]
+            : recordLog[Rating.Easy];
 
     return {
       cardState: result.card,

@@ -56,18 +56,17 @@ class ReviewDB {
           const getAllRequest = cardStore.getAll();
           getAllRequest.onsuccess = () => {
             const cards = getAllRequest.result;
-            cards.forEach((card: CardReviewState & { sm2State?: unknown }) => {
+            for (const card of cards as Array<CardReviewState & { sm2State?: unknown }>) {
               if (card.sm2State && !card.cardState) {
-                // Migrate SM2 cards to new format
+                const { sm2State, ...rest } = card;
                 const migratedCard: CardReviewState = {
-                  ...card,
+                  ...rest,
                   algorithm: "sm2",
-                  cardState: card.sm2State,
+                  cardState: sm2State,
                 };
-                delete (migratedCard as CardReviewState & { sm2State?: unknown }).sm2State;
                 cardStore.put(migratedCard);
               }
-            });
+            }
           };
         }
 
@@ -266,18 +265,12 @@ class ReviewDB {
         "readwrite",
       );
 
-      const stores = ["cards", "reviewLogs", "dailyStats", "settings"];
-      let completed = 0;
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
 
+      const stores = ["cards", "reviewLogs", "dailyStats", "settings"];
       for (const storeName of stores) {
-        const request = transaction.objectStore(storeName).clear();
-        request.onsuccess = () => {
-          completed++;
-          if (completed === stores.length) {
-            resolve();
-          }
-        };
-        request.onerror = () => reject(request.error);
+        transaction.objectStore(storeName).clear();
       }
     });
   }

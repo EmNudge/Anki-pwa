@@ -119,14 +119,16 @@ export function IconButton(props: IconButtonProps) {
     }
   `;
 
-  const classes = () => {
-    const classList: string[] = ["ds-icon-button"];
-    classList.push(`ds-icon-button--${variant()}`);
-    classList.push(`ds-icon-button--${size()}`);
-    classList.push(`ds-icon-button--${shape()}`);
-    if (local.class) classList.push(local.class);
-    return classList.join(" ");
-  };
+  const classes = () =>
+    [
+      "ds-icon-button",
+      `ds-icon-button--${variant()}`,
+      `ds-icon-button--${size()}`,
+      `ds-icon-button--${shape()}`,
+      local.class,
+    ]
+      .filter(Boolean)
+      .join(" ");
 
   return (
     <button class={classes()} {...others}>

@@ -142,13 +142,15 @@ export function Badge(props: BadgeProps) {
     }
   `;
 
-  const classes = () => {
-    const classList: string[] = ["ds-badge"];
-    classList.push(`ds-badge--${size()}`);
-    classList.push(`ds-badge--${variant()}-${badgeStyle()}`);
-    if (local.class) classList.push(local.class);
-    return classList.join(" ");
-  };
+  const classes = () =>
+    [
+      "ds-badge",
+      `ds-badge--${size()}`,
+      `ds-badge--${variant()}-${badgeStyle()}`,
+      local.class,
+    ]
+      .filter(Boolean)
+      .join(" ");
 
   return (
     <span class={classes()} {...others}>

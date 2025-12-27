@@ -8,7 +8,7 @@ export function CommandPalette(props: { commands: Command[] }) {
   const [selectedIndex, setSelectedIndex] = createSignal(0);
   const [breadcrumb, setBreadcrumb] = createSignal<string[]>([]);
 
-  let [inputRef, setInputRef] = createSignal<HTMLInputElement | undefined>(undefined);
+  const [inputRef, setInputRef] = createSignal<HTMLInputElement | undefined>(undefined);
 
   // eslint-disable-next-line no-unused-expressions
   css`
@@ -349,20 +349,14 @@ export function CommandPalette(props: { commands: Command[] }) {
 
   const matchesHotkey = (e: KeyboardEvent, hotkey: string): boolean => {
     const parts = hotkey.toLowerCase().split("+").map((s) => s.trim());
-
-    let needsCtrl = false;
-    let needsMeta = false;
-    let needsShift = false;
-    let needsAlt = false;
-    let key = "";
-
-    for (const part of parts) {
-      if (part === "ctrl") needsCtrl = true;
-      else if (part === "cmd" || part === "meta") needsMeta = true;
-      else if (part === "shift") needsShift = true;
-      else if (part === "alt") needsAlt = true;
-      else key = part;
-    }
+    const partSet = new Set(parts);
+    const key =
+      parts.find((p) => p !== "ctrl" && p !== "cmd" && p !== "meta" && p !== "shift" && p !== "alt") ??
+      "";
+    const needsCtrl = partSet.has("ctrl");
+    const needsMeta = partSet.has("cmd") || partSet.has("meta");
+    const needsShift = partSet.has("shift");
+    const needsAlt = partSet.has("alt");
 
     return (
       (needsCtrl ? e.ctrlKey : !e.ctrlKey || needsMeta) &&
@@ -372,6 +366,18 @@ export function CommandPalette(props: { commands: Command[] }) {
       e.key.toLowerCase() === key
     );
   };
+
+  // Open palette with Cmd/Ctrl + K
+  createEffect(() => {
+    const onKeydown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCommandPaletteOpenSig(true);
+      }
+    };
+    window.addEventListener("keydown", onKeydown);
+    onCleanup(() => window.removeEventListener("keydown", onKeydown));
+  });
 
   // Global hotkeys for commands based on props.commands
   createEffect(() => {

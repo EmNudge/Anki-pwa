@@ -54,13 +54,15 @@ export function Container(props: ContainerProps) {
     }
   `;
 
-  const classes = () => {
-    const classList: string[] = ["ds-container"];
-    classList.push(`ds-container--${size()}`);
-    if (padding()) classList.push("ds-container--padding");
-    if (local.class) classList.push(local.class);
-    return classList.join(" ");
-  };
+  const classes = () =>
+    [
+      "ds-container",
+      `ds-container--${size()}`,
+      padding() ? "ds-container--padding" : undefined,
+      local.class,
+    ]
+      .filter(Boolean)
+      .join(" ");
 
   return (
     <div class={classes()} {...others}>
