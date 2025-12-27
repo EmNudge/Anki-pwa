@@ -16,12 +16,37 @@ export type AnkiDB21bData = {
       afmt: string;
       qfmt: string;
     }[];
+    deckName: string;
   }[];
   notesTypes: ReturnType<typeof getNotesType>;
   deckName: string;
+  decks: Record<string, { id: number; name: string }>;
 };
 
 export function getDataFromAnki21b(db: Database): AnkiDB21bData {
+  // Extract all decks from the decks table
+  const { decks, deckName } = (() => {
+    try {
+      const deckRows = executeQueryAll<{ id: number; name: string }>(
+        db,
+        "SELECT id, name FROM decks",
+      );
+
+      const decks = Object.fromEntries(
+        deckRows.map((deck) => [deck.id.toString(), { id: deck.id, name: deck.name }])
+      );
+
+      // Use the first non-default deck's name, or "Default" if only default exists
+      const deckName =
+        deckRows.find((d) => d.name !== "Default")?.name ?? deckRows[0]?.name ?? "Unknown";
+
+      return { decks, deckName };
+    } catch (e) {
+      console.warn("Failed to parse deck information:", e);
+      return { decks: {}, deckName: "Unknown" };
+    }
+  })();
+
   /**
    * Fields define the font size and name for each side of a card.
    * Their key is a composite of ntid + ord and is identical to the ntid of one row in templates
@@ -66,10 +91,25 @@ export function getDataFromAnki21b(db: Database): AnkiDB21bData {
      * They have a flds "array" that has its keys as entries in the fields table.
      */
     const notes = executeQueryAll<{
+      id: number;
       flds: string;
       tags: string;
       mid: string;
-    }>(db, "SELECT flds, tags, cast(mid as text) as mid FROM notes");
+    }>(db, "SELECT id, flds, tags, cast(mid as text) as mid FROM notes");
+
+    // Query cards table to get deck IDs for each note
+    const cardsDeckInfo = executeQueryAll<{ nid: number; did: number }>(
+      db,
+      "SELECT nid, did FROM cards",
+    );
+
+    // Create a map from note ID to deck ID (use first card's deck if multiple cards per note)
+    const noteToDeckId = new Map<number, number>();
+    for (const card of cardsDeckInfo) {
+      if (!noteToDeckId.has(card.nid)) {
+        noteToDeckId.set(card.nid, card.did);
+      }
+    }
 
     return notes.map((note) => {
       const fieldNames = fields
@@ -79,6 +119,11 @@ export function getDataFromAnki21b(db: Database): AnkiDB21bData {
       const templates = templatesMap.get(note.mid);
       assertTruthy(templates, `Template for note ${note.mid} not found`);
 
+      // Get deck name for this note
+      const deckId = noteToDeckId.get(note.id);
+      const cardDeckName =
+        deckId !== undefined ? decks[deckId.toString()]?.name ?? "Unknown" : "Unknown";
+
       return {
         values: Object.fromEntries(
           note.flds.split("\x1F").map((value, i) => [fieldNames[i], value]),
@@ -86,15 +131,12 @@ export function getDataFromAnki21b(db: Database): AnkiDB21bData {
         // anki21b only has one template per model?
         templates: templates,
         tags: [],
+        deckName: cardDeckName,
       };
     });
   })();
 
   const notesTypes = getNotesType(db);
 
-  // anki21b format doesn't store deck name in the same way as anki2
-  // Default to "Unknown" for now
-  const deckName = "Unknown";
-
-  return { cards, notesTypes, deckName };
+  return { cards, notesTypes, deckName, decks };
 }
