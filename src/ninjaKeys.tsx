@@ -126,10 +126,23 @@ export function useCommands() {
               title: "Switch Deck",
               icon: <FiGrid />,
               hotkey: "ctrl+D",
-              children: deckInfo.subdecks.map((subdeck) => subdeck.id),
+              children: ["all", ...deckInfo.subdecks.map((subdeck) => subdeck.id)],
               handler: () => {
                 openCommandPalette("switch-deck");
                 return { keepOpen: true };
+              },
+            },
+            {
+              id: "all",
+              title: "All Cards",
+              icon: <FiLayers />,
+              parent: "switch-deck",
+              metadata: [
+                { label: "Cards", value: deckInfo.cardCount.toString() },
+                { label: "Templates", value: deckInfo.templateCount.toString() },
+              ],
+              handler: () => {
+                setSelectedDeckIdSig(null);
               },
             },
             ...deckInfo.subdecks.map((subdeck) => ({

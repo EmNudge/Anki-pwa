@@ -35,8 +35,9 @@ export function getRenderedCardString({
  * source strings are replaced with blob URLs
  */
 function replaceMediaFiles(renderedString: string, mediaFiles: Map<string, string>) {
-  return renderedString.replace(/="([^"]+?\.[^."]+)"/g, (match, filename) => {
+  return renderedString.replace(/="([^"](\\"|[^"])+)"/g, (match, filename) => {
     const url = mediaFiles.get(filename);
+    console.log({filename, url, renderedString, mediaFiles});
     return url ? `="${url}"` : match;
   });
 }
