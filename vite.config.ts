@@ -7,7 +7,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   optimizeDeps: {
-    exclude: ['@bokuweb/zstd-wasm'],
+    exclude: ['@dweb-browser/zstd-wasm'],
   },
   build: {
     target: 'es2020',

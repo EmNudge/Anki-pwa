@@ -2,7 +2,7 @@ import { soundEffectsEnabledSig } from "../stores";
 
 type Sound = "click_01.mp3" | "click_02.mp3";
 
-export function playSound(filename: Sound) {
+function playSound(filename: Sound) {
   if (!soundEffectsEnabledSig()) {
     return;
   }

@@ -1,73 +1,9 @@
 import { Database } from "sql.js";
-import { executeQuery, executeQueryAll } from "~/utils/sql";
+import { executeQueryAll } from "~/utils/sql";
 import protobuf from "protobufjs";
-import deckConfigProto from "./deck_config.proto?raw";
 import notesTypeProto from "./notestype.proto?raw";
 import templatesProto from "./templates.proto?raw";
 import fieldConfigProto from "./field.proto?raw";
-
-type Anki21bDeckConfig = {
-  answerAction: number;
-  buryInterdayLearning: boolean;
-  buryNew: boolean;
-  buryReviews: boolean;
-  capAnswerTimeToSecs: number;
-  desiredRetention: number;
-  disableAutoplay: boolean;
-  easyDaysPercentages: number[];
-  easyMultiplier: number;
-  fsrsParams_4: unknown[];
-  fsrsParams_5: unknown[];
-  graduatingIntervalEasy: number;
-  graduatingIntervalGood: number;
-  hardMultiplier: number;
-  historicalRetention: number;
-  ignoreRevlogsBeforeDate: string;
-  initialEase: number;
-  interdayLearningMix: number;
-  intervalMultiplier: number;
-  lapseMultiplier: number;
-  learnSteps: number[];
-  leechAction: number;
-  leechThreshold: number;
-  maximumReviewInterval: number;
-  minimumLapseInterval: number;
-  newCardGatherPriority: number;
-  newCardInsertOrder: number;
-  newCardSortOrder: number;
-  newMix: number;
-  newPerDay: number;
-  newPerDayMinimum: number;
-  other: unknown[];
-  paramSearch: string;
-  questionAction: number;
-  relearnSteps: number[];
-  reviewOrder: number;
-  reviewsPerDay: number;
-  secondsToShowAnswer: number;
-  secondsToShowQuestion: number;
-  showTimer: boolean;
-  skipQuestionWhenReplayingAnswer: boolean;
-  stopTimerOnAnswer: boolean;
-  waitForAudio: boolean;
-};
-
-export function getDeckConfig(db: Database) {
-  const deckConfig = executeQuery<{
-    config: Uint8Array;
-    id: number;
-    mtime_secs: number;
-    name: string;
-    usn: number;
-  }>(db, "select * from deck_config");
-
-  const { root } = protobuf.parse(deckConfigProto);
-  const DeckConfig = root.lookupType("ConfigInDeckConfig");
-
-  const deckConfigParsed = DeckConfig.decode(deckConfig.config) as unknown as Anki21bDeckConfig;
-
-  return { ...deckConfig, config: deckConfigParsed };
-}
 
 export function getNotesType(db: Database) {
   /**
@@ -103,7 +39,7 @@ type Anki21bNotesTypeConfig = {
   targetDeckIdUnused: number;
 };
 
-export function parseNotesTypeConfigProto(proto: Uint8Array) {
+function parseNotesTypeConfigProto(proto: Uint8Array) {
   const { root } = protobuf.parse(notesTypeProto);
   const NotesTypeConfig = root.lookupType("NotesTypeConfig");
 

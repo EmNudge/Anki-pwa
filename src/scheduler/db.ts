@@ -7,7 +7,7 @@ const DB_VERSION = 2; // Updated for FSRS support
 /**
  * IndexedDB wrapper for persisting review state
  */
-export class ReviewDB {
+class ReviewDB {
   private db: IDBDatabase | null = null;
   private initPromise: Promise<void>;
 
