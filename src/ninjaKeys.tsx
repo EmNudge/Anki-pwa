@@ -10,6 +10,8 @@ import {
   toggleSoundEffects,
   setSchedulerSettingsModalOpenSig,
   resetScheduler,
+  backgroundFxEnabledSig,
+  toggleBackgroundFx,
 } from "./stores";
 import type { Command } from "./commandPaletteStore";
 import { FiFolder, FiArrowRight, FiLayers, FiMoon, FiVolume2, FiVolumeX, FiPause, FiPlay, FiSettings, FiRefreshCw, FiClipboard, FiFile } from "solid-icons/fi";
@@ -78,6 +80,14 @@ export function useCommands() {
         hotkey: "ctrl+E",
         handler: () => {
           toggleSoundEffects();
+        },
+      },
+      {
+        id: "toggle-background-fx",
+        title: `${backgroundFxEnabledSig() ? "Disable" : "Enable"} Background Animation`,
+        icon: backgroundFxEnabledSig() ? <FiPause /> : <FiPlay />,
+        handler: () => {
+          toggleBackgroundFx();
         },
       },
       {
