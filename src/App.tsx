@@ -32,7 +32,7 @@ import { SRSVisualization } from "./components/SRSVisualization";
 import { SchedulerSettingsModal } from "./components/SchedulerSettings";
 import { CommandPalette } from "./components/CommandPalette";
 import { FileInfo } from "./components/FileInfo";
-import { useCommands } from "./ninjaKeys";
+import { useCommands } from "./useCommands";
 import { BackgroundWebGL } from "./components/BackgroundWebGL";
 import { backgroundFxEnabledSig } from "./stores";
 import { triggerPositiveBurst } from "./utils/fxBus";

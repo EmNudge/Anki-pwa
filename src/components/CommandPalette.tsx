@@ -349,30 +349,22 @@ export function CommandPalette(props: { commands: Command[] }) {
     }
   `;
 
-  // Get current parent commands
-  const currentParent = () => breadcrumb()[breadcrumb().length - 1];
+  // Commands at current breadcrumb level (navigate nested children)
+  const commandsAtCurrentLevel = () => {
+    let list = props.commands;
+    for (const id of breadcrumb()) {
+      const next = list.find((c) => c.id === id);
+      list = next?.children ?? [];
+    }
+    return list;
+  };
 
-  // Filter commands based on search and parent
+  // Filter commands based on search within current level
   const filteredCommands = () => {
-    const commands = props.commands;
+    const commands = commandsAtCurrentLevel();
     const query = searchQuery().toLowerCase();
-    const parent = currentParent();
-
-    return commands.filter((cmd) => {
-      // Filter by parent
-      if (parent) {
-        if (cmd.parent !== parent) return false;
-      } else {
-        if (cmd.parent) return false;
-      }
-
-      // Filter by search query
-      if (query && !cmd.title.toLowerCase().includes(query)) {
-        return false;
-      }
-
-      return true;
-    });
+    if (!query) return commands;
+    return commands.filter((cmd) => cmd.title.toLowerCase().includes(query));
   };
 
   // Reset selection when filtered commands change
@@ -503,7 +495,9 @@ export function CommandPalette(props: { commands: Command[] }) {
         return;
       }
 
-      const commands = props.commands;
+      const flatten = (list: Command[]): Command[] =>
+        list.flatMap((c) => [c, ...(c.children ? flatten(c.children) : [])]);
+      const commands = flatten(props.commands);
       for (const cmd of commands) {
         if (cmd.hotkey && matchesHotkey(e, cmd.hotkey)) {
           e.preventDefault();
@@ -613,7 +607,7 @@ export function CommandPalette(props: { commands: Command[] }) {
                     <Show when={cmd.children && cmd.children.length > 0}>
                       <span class="command-item-arrow">→</span>
                     </Show>
-                    <Show when={!cmd.children && cmd.hotkey && !currentParent()}>
+                    <Show when={!cmd.children && cmd.hotkey && breadcrumb().length === 0}>
                       {renderHotkey(cmd.hotkey)}
                     </Show>
                   </div>

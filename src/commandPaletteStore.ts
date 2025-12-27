@@ -7,8 +7,7 @@ export interface Command {
   icon?: JSX.Element;
   hotkey?: string;
   label?: string;
-  parent?: string;
-  children?: string[];
+  children?: Command[];
   handler?: () => void | { keepOpen: boolean };
   metadata?: {
     label: string;
