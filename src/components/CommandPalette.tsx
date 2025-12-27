@@ -13,6 +13,7 @@ export function CommandPalette(props: { commands: Command[] }) {
   const [searchQuery, setSearchQuery] = createSignal("");
   const [selectedIndex, setSelectedIndex] = createSignal(0);
   const [breadcrumb, setBreadcrumb] = createSignal<string[]>([]);
+  const [selectedCommand, setSelectedCommand] = createSignal<Command | null>(null);
 
   const [inputRef, setInputRef] = createSignal<HTMLInputElement | undefined>(undefined);
 
@@ -43,6 +44,12 @@ export function CommandPalette(props: { commands: Command[] }) {
       }
     }
 
+    .command-palette-container {
+      display: flex;
+      gap: var(--spacing-4);
+      animation: slideDown var(--duration-base) var(--ease-out);
+    }
+
     .command-palette {
       background: var(--color-surface);
       border: 1px solid var(--color-border);
@@ -54,7 +61,77 @@ export function CommandPalette(props: { commands: Command[] }) {
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      animation: slideDown var(--duration-base) var(--ease-out);
+    }
+
+    .command-palette-side-view {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      width: 400px;
+      max-width: 40vw;
+      max-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .side-view-header {
+      padding: var(--spacing-4);
+      border-bottom: 1px solid var(--color-border);
+      font-weight: var(--font-weight-semibold);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+    }
+
+    .side-view-content {
+      padding: var(--spacing-4);
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .metadata-item {
+      margin-bottom: var(--spacing-3);
+    }
+
+    .metadata-label {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-tertiary);
+      font-weight: var(--font-weight-medium);
+      margin-bottom: var(--spacing-1);
+    }
+
+    .metadata-value {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .metadata-value-code {
+      font-family: var(--font-family-mono);
+      font-size: var(--font-size-xs);
+      background: var(--color-surface-elevated);
+      padding: var(--spacing-2);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-border);
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .template-variable {
+      color: var(--color-primary-600);
+      font-weight: var(--font-weight-semibold);
+      background: var(--color-primary-50);
+      padding: 0 2px;
+      border-radius: var(--radius-xs);
+    }
+
+    :root[data-theme="dark"] .template-variable {
+      color: var(--color-primary-400);
+      background: var(--color-primary-950);
     }
 
     @keyframes slideDown {
@@ -264,7 +341,6 @@ export function CommandPalette(props: { commands: Command[] }) {
   // Filter commands based on search and parent
   const filteredCommands = () => {
     const commands = props.commands;
-    console.log("filteredCommands called, commands:", commands);
     const query = searchQuery().toLowerCase();
     const parent = currentParent();
 
@@ -287,8 +363,16 @@ export function CommandPalette(props: { commands: Command[] }) {
 
   // Reset selection when filtered commands change
   createEffect(() => {
-    filteredCommands();
+    const commands = filteredCommands();
     setSelectedIndex(0);
+    setSelectedCommand(commands[0] ?? null);
+  });
+
+  // Update selected command when index changes
+  createEffect(() => {
+    const commands = filteredCommands();
+    const index = selectedIndex();
+    setSelectedCommand(commands[index] ?? null);
   });
 
   // Focus input when opened
@@ -456,7 +540,8 @@ export function CommandPalette(props: { commands: Command[] }) {
   return (
     <Show when={commandPaletteOpenSig()}>
       <div class="command-palette-overlay" onClick={closeCommandPalette}>
-        <div class="command-palette" onClick={(e) => e.stopPropagation()}>
+        <div class="command-palette-container" onClick={(e) => e.stopPropagation()}>
+          <div class="command-palette">
           <div class="command-palette-header">
             <Show when={breadcrumb().length > 0}>
               <div class="command-palette-breadcrumb">
@@ -532,6 +617,25 @@ export function CommandPalette(props: { commands: Command[] }) {
             </div>
           </div>
         </div>
+
+        <Show when={selectedCommand()?.metadata && selectedCommand()!.metadata!.length > 0}>
+          <div class="command-palette-side-view">
+            <div class="side-view-header">
+              {selectedCommand()!.title}
+            </div>
+            <div class="side-view-content">
+              <For each={selectedCommand()!.metadata}>
+                {(item) => (
+                  <div class="metadata-item">
+                    <div class="metadata-label">{item.label}</div>
+                    <div class="metadata-value">{item.value}</div>
+                  </div>
+                )}
+              </For>
+            </div>
+          </div>
+        </Show>
+      </div>
       </div>
     </Show>
   );

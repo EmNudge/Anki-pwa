@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 
-export type PositiveAnswer = "good" | "easy";
+type PositiveAnswer = "good" | "easy";
 
 type FxEvent =
   | {

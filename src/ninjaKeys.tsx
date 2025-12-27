@@ -1,7 +1,7 @@
-import { ankiCachePromise, ankiDataSig, cardsSig, setBlobSig } from "./stores";
+import { ankiCachePromise, cardsSig, setBlobSig } from "./stores";
 import { setSelectedCardSig } from "./stores";
 import { templatesSig } from "./stores";
-import { createMemo } from "solid-js";
+import { createMemo, JSX } from "solid-js";
 import { setSelectedTemplateSig } from "./stores";
 import {
   schedulerEnabledSig,
@@ -18,13 +18,12 @@ import {
 import type { Command } from "./commandPaletteStore";
 import { openCommandPalette } from "./commandPaletteStore";
 import { FiFolder, FiArrowRight, FiLayers, FiMoon, FiVolume2, FiVolumeX, FiPause, FiPlay, FiSettings, FiRefreshCw, FiClipboard, FiFile, FiGrid } from "solid-icons/fi";
+import { css } from "solid-styled";
 
 export function useCommands() {
   return createMemo<Command[]>(() => {
     const templates = templatesSig();
-    const ankiData = ankiDataSig();
     const deckInfo = deckInfoSig();
-    console.log("computing commands, ankiData:", ankiData);
 
     const commands: Command[] = [
       {
@@ -138,6 +137,10 @@ export function useCommands() {
               title: subdeck.name,
               icon: <FiLayers />,
               parent: "switch-deck",
+              metadata: [
+                { label: "Cards", value: subdeck.cardCount.toString() },
+                { label: "Templates", value: subdeck.templateCount.toString() },
+              ],
               handler: () => {
                 setSelectedDeckIdSig(subdeck.id);
               },
@@ -166,19 +169,81 @@ export function useCommands() {
                 return { keepOpen: true };
               },
             },
-            ...templates.map((template, index) => ({
-              id: template.name,
-              title: template.name,
-              icon: <FiFile />,
-              parent: "select-template",
-              handler: () => {
-                setSelectedTemplateSig(index);
-              },
-            })),
+            ...templates.map((template, index) => {
+              const frontHtml = template.qfmt;
+              const backHtml = template.afmt;
+
+              return {
+                id: template.name,
+                title: template.name,
+                icon: <FiFile />,
+                parent: "select-template",
+                metadata: [
+                  {
+                    label: "Template Front",
+                    value: <TemplateViewer templateHtml={frontHtml} />
+                  },
+                  {
+                    label: "Template Back",
+                    value: <TemplateViewer templateHtml={backHtml} />
+                  },
+                ],
+                handler: () => {
+                  setSelectedTemplateSig(index);
+                },
+              };
+            }),
           ]
         : []),
     ];
 
     return commands;
   });
+}
+
+const TemplateViewer = (props: { templateHtml: string }) => {
+  const highlightedHtml = highlightTemplateVariables(props.templateHtml);
+
+  // eslint-disable-next-line no-unused-expressions
+  css`
+    .metadata-value-code {
+      font-family: var(--font-family-mono);
+      font-size: var(--font-size-xs);
+      background: var(--color-surface-elevated);
+      padding: var(--spacing-2);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-border);
+    }
+
+    .metadata-value-code :global(span) {
+      color: var(--color-primary-300);
+    }
+  `;
+
+  return <div class="metadata-value-code">{highlightedHtml}</div>;
+}
+
+
+function highlightTemplateVariables(templateStr: string) {
+  const parts: (string | JSX.Element)[] = [];
+  const regex = /(\{\{[^}]+\}\})/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(templateStr)) !== null) {
+    // Add text before the match
+    if (match.index > lastIndex) {
+      parts.push(templateStr.slice(lastIndex, match.index));
+    }
+    // Add the highlighted variable
+    parts.push(<span class="template-variable">{match[0]}</span>);
+    lastIndex = regex.lastIndex;
+  }
+
+  // Add remaining text
+  if (lastIndex < templateStr.length) {
+    parts.push(templateStr.slice(lastIndex));
+  }
+
+  return parts;
 }
