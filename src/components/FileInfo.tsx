@@ -173,7 +173,7 @@ export function FileInfo() {
               {pluralizeWithCount(currentTemplateCount(), "template", "templates")}
             </div>
           </div>
-          <button class="change-deck-button" onClick={handleChangeDeck} disabled={deckCount() <= 1}>
+          <button class="change-deck-button" onClick={handleChangeDeck} disabled={deckCount() === 0}>
             Select Deck
             <FiChevronDown />
           </button>
