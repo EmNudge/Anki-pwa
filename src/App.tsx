@@ -36,6 +36,7 @@ import { useCommands } from "./ninjaKeys";
 import { BackgroundWebGL } from "./components/BackgroundWebGL";
 import { backgroundFxEnabledSig } from "./stores";
 import { triggerPositiveBurst } from "./utils/fxBus";
+import { isTruthy } from "./utils/assert";
 
 function App() {
   // eslint-disable-next-line no-unused-expressions
@@ -261,6 +262,36 @@ function App() {
     return { frontSideHtml, backSideHtml };
   });
 
+  const updateActiveSide = (side: "front" | "back") => {
+    setActiveSide(side);
+    const card = renderedCard();
+    if (!card) return;
+
+    if (side === "front") {
+      const audioFilenames = getAudioFilenames(card.frontSideHtml);
+      console.log("playing audioFilenames", audioFilenames);
+      for (const filename of audioFilenames) {
+        new Audio(filename).play();
+      }
+    } else {
+      const frontSideAudioFilenames = new Set(getAudioFilenames(card.frontSideHtml));
+      const backSideAudioFilenames = new Set(getAudioFilenames(card.backSideHtml));
+      const newAudioFilenames = backSideAudioFilenames.difference(frontSideAudioFilenames);
+
+      for (const filename of newAudioFilenames) {
+        new Audio(filename).play();
+      }
+    }
+
+    function getAudioFilenames(html: string) {
+      const allAudioContainers = new DOMParser()
+        .parseFromString(html, "text/html")
+        .querySelectorAll<HTMLAudioElement>(`div.audio-container[data-autoplay] audio`);
+
+      return [...allAudioContainers].map((audio) => audio.src).filter(isTruthy);
+    }
+  };
+
   // Calculate intervals for scheduler mode
   const intervals = createMemo(() => {
     if (!schedulerEnabledSig()) return undefined;
@@ -308,7 +339,7 @@ function App() {
                   activeSide={activeSide()}
                   intervals={intervals()}
                   onReveal={() => {
-                    setActiveSide("back");
+                    updateActiveSide("back");
                     setReviewStartTime(Date.now());
                   }}
                   onChooseAnswer={async (answer: Answer) => {
@@ -330,7 +361,7 @@ function App() {
                       setSelectedCardSig((prevCard) => prevCard + 1);
                     }
 
-                    setActiveSide("front");
+                    updateActiveSide("front");
                     setReviewStartTime(Date.now());
                   }}
                 />
@@ -338,7 +369,7 @@ function App() {
                   activeSide={activeSide()}
                   intervals={intervals()}
                   onReveal={() => {
-                    setActiveSide("back");
+                    updateActiveSide("back");
                     setReviewStartTime(Date.now());
                   }}
                   onChooseAnswer={async (answer: Answer) => {
@@ -360,7 +391,7 @@ function App() {
                       setSelectedCardSig((prevCard) => prevCard + 1);
                     }
 
-                    setActiveSide("front");
+                    updateActiveSide("front");
                     setReviewStartTime(Date.now());
                   }}
                 />

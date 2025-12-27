@@ -134,7 +134,9 @@ export function Card(props: {
       <div class={`card-indicator card-indicator--${props.activeSide}`}>
         {props.activeSide === "front" ? "Front" : "Back"}
       </div>
-      <div class="card-content">{props.activeSide === "front" ? props.front : props.back}</div>
+      <div class="card-content">
+        {props.activeSide === "front" ? props.front : props.back}
+      </div>
     </div>
   );
 }
