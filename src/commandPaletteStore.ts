@@ -12,5 +12,13 @@ export interface Command {
 }
 
 const [commandPaletteOpenSig, setCommandPaletteOpenSig] = createSignal(false);
+const [commandPaletteInitialParentSig, setCommandPaletteInitialParentSig] = createSignal<
+  string | null
+>(null);
 
-export { commandPaletteOpenSig, setCommandPaletteOpenSig };
+export function openCommandPalette(initialParent?: string) {
+  setCommandPaletteInitialParentSig(initialParent ?? null);
+  setCommandPaletteOpenSig(true);
+}
+
+export { commandPaletteOpenSig, setCommandPaletteOpenSig, commandPaletteInitialParentSig };

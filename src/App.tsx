@@ -18,12 +18,15 @@ import {
   schedulerEnabledSig,
   schedulerSettingsModalOpenSig,
   selectedCardSig,
+  selectedDeckIdSig,
   selectedTemplateSig,
   setBlobSig,
   setDeckInfoSig,
   setSchedulerSettingsModalOpenSig,
   setSelectedCardSig,
+  setSelectedDeckIdSig,
   templatesSig,
+  type SubDeckInfo,
 } from "./stores";
 import { SRSVisualization } from "./components/SRSVisualization";
 import { SchedulerSettingsModal } from "./components/SchedulerSettings";
@@ -124,17 +127,79 @@ function App() {
   createEffect(() => {
     const ankiData = ankiDataSig();
     if (ankiData) {
-      // Count unique templates across all cards
+      // Calculate stats for each subdeck
+      const subdeckStats = new Map<string, { cardCount: number; templates: Set<string> }>();
+
+      // Initialize all decks with zero counts
+      Object.entries(ankiData.decks).forEach(([deckId]) => {
+        subdeckStats.set(deckId, { cardCount: 0, templates: new Set() });
+      });
+
+      // Count cards and templates per deck
+      ankiData.cards.forEach((card) => {
+        // Find the deck ID for this card by matching the deckName
+        const deckEntry = Object.entries(ankiData.decks).find(
+          ([_, deck]) => deck.name === card.deckName,
+        );
+
+        if (deckEntry) {
+          const [deckId] = deckEntry;
+          const stats = subdeckStats.get(deckId);
+          if (stats) {
+            stats.cardCount++;
+            card.templates.forEach((template) => stats.templates.add(template.name));
+          }
+        }
+      });
+
+      // Build subdeck info array
+      const subdecks: SubDeckInfo[] = Object.entries(ankiData.decks)
+        .map(([deckId, deck]) => {
+          const stats = subdeckStats.get(deckId);
+          return {
+            id: deckId,
+            name: deck.name,
+            cardCount: stats?.cardCount ?? 0,
+            templateCount: stats?.templates.size ?? 0,
+          };
+        })
+        .filter((subdeck) => subdeck.cardCount > 0); // Only show decks with cards
+
+      // Calculate totals
+      const totalCardCount = ankiData.cards.length;
       const uniqueTemplates = new Set(
         ankiData.cards.flatMap((card) => card.templates.map((template) => template.name)),
       );
 
+      // If the deck name is "Default", try to extract a better name from subdecks
+      let displayName = ankiData.deckName;
+      if (displayName === "Default" && subdecks.length > 0) {
+        // Find common parent from subdeck names (before the first "::")
+        const parentNames = subdecks
+          .map((subdeck) => {
+            const parts = subdeck.name.split("::");
+            return parts.length > 1 ? parts[0] : null;
+          })
+          .filter((name): name is string => name !== null);
+
+        // If all subdecks share a common parent, use that as the display name
+        if (parentNames.length > 0 && parentNames.every((name) => name === parentNames[0])) {
+          displayName = parentNames[0]!;
+        }
+      }
+
       const deckInfo = {
-        name: ankiData.deckName,
-        cardCount: ankiData.cards.length,
+        name: displayName,
+        cardCount: totalCardCount,
         templateCount: uniqueTemplates.size,
+        subdecks,
       };
       setDeckInfoSig(deckInfo);
+
+      // Set initial selected deck to the first subdeck if available
+      if (subdecks.length > 0 && selectedDeckIdSig() === null) {
+        setSelectedDeckIdSig(subdecks[0]!.id);
+      }
     }
   });
 

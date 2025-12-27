@@ -12,14 +12,18 @@ import {
   resetScheduler,
   backgroundFxEnabledSig,
   toggleBackgroundFx,
+  deckInfoSig,
+  setSelectedDeckIdSig,
 } from "./stores";
 import type { Command } from "./commandPaletteStore";
-import { FiFolder, FiArrowRight, FiLayers, FiMoon, FiVolume2, FiVolumeX, FiPause, FiPlay, FiSettings, FiRefreshCw, FiClipboard, FiFile } from "solid-icons/fi";
+import { openCommandPalette } from "./commandPaletteStore";
+import { FiFolder, FiArrowRight, FiLayers, FiMoon, FiVolume2, FiVolumeX, FiPause, FiPlay, FiSettings, FiRefreshCw, FiClipboard, FiFile, FiGrid } from "solid-icons/fi";
 
 export function useCommands() {
   return createMemo<Command[]>(() => {
     const templates = templatesSig();
     const ankiData = ankiDataSig();
+    const deckInfo = deckInfoSig();
     console.log("computing commands, ankiData:", ankiData);
 
     const commands: Command[] = [
@@ -116,6 +120,30 @@ export function useCommands() {
           resetScheduler();
         },
       },
+      ...(deckInfo && deckInfo.subdecks.length > 0
+        ? [
+            {
+              id: "switch-deck",
+              title: "Switch Deck",
+              icon: <FiGrid />,
+              hotkey: "ctrl+D",
+              children: deckInfo.subdecks.map((subdeck) => subdeck.id),
+              handler: () => {
+                openCommandPalette("switch-deck");
+                return { keepOpen: true };
+              },
+            },
+            ...deckInfo.subdecks.map((subdeck) => ({
+              id: subdeck.id,
+              title: subdeck.name,
+              icon: <FiLayers />,
+              parent: "switch-deck",
+              handler: () => {
+                setSelectedDeckIdSig(subdeck.id);
+              },
+            })),
+          ]
+        : []),
       ...cardsSig().map((_card, index) => ({
         id: `Card ${index + 1}`,
         title: `Card ${index + 1}`,
@@ -134,7 +162,7 @@ export function useCommands() {
               hotkey: "ctrl+L",
               children: templates.map((template) => template.name),
               handler: () => {
-                // Keep palette open to choose a template
+                openCommandPalette("select-template");
                 return { keepOpen: true };
               },
             },

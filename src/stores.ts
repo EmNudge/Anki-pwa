@@ -4,11 +4,21 @@ import { ReviewQueue, type ReviewCard } from "./scheduler/queue";
 import { DEFAULT_SCHEDULER_SETTINGS, type SchedulerSettings } from "./scheduler/types";
 import { reviewDB } from "./scheduler/db";
 
+export interface SubDeckInfo {
+  id: string;
+  name: string;
+  cardCount: number;
+  templateCount: number;
+}
+
 export const [deckInfoSig, setDeckInfoSig] = createSignal<{
   name: string;
   cardCount: number;
   templateCount: number;
+  subdecks: SubDeckInfo[];
 } | null>(null);
+
+export const [selectedDeckIdSig, setSelectedDeckIdSig] = createSignal<string | null>(null);
 
 export const ankiCachePromise = caches.open("anki-cache");
 export const [blobSig, setBlobSig] = createSignal<Blob | null>(null);
