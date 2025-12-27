@@ -43,18 +43,95 @@ function replaceMediaFiles(renderedString: string, mediaFiles: Map<string, strin
 }
 
 function replaceLatex(renderedString: string) {
-  const replaceLatex = (match: string, latex: string) => {
+  const cleanAndUnescapeLatex = (latex: string) => {
+    // Strip HTML tags that Anki may have inserted
+    let cleanLatex = latex.replace(/<[^>]+>/g, '');
+
+    // Unescape HTML entities
+    cleanLatex = cleanLatex
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ');
+
+    // Trim whitespace
+    return cleanLatex.trim();
+  };
+
+  const replaceDisplayMathBlock = (_match: string, latex: string) => {
     try {
-      return katex.renderToString(latex);
+      const cleanLatex = cleanAndUnescapeLatex(latex);
+
+      // Skip empty blocks
+      if (!cleanLatex) {
+        return '';
+      }
+
+      // Render as display mode LaTeX
+      return katex.renderToString(cleanLatex, { displayMode: true });
     } catch (error) {
       console.error(new Error("could not parse latex for: " + latex, { cause: error }));
-      return match;
+      // Return cleaned content without the tags
+      return cleanAndUnescapeLatex(latex);
+    }
+  };
+
+  const replaceLatexBlock = (_match: string, latex: string) => {
+    try {
+      const cleanLatex = cleanAndUnescapeLatex(latex);
+
+      // Check if this contains a LaTeX environment (like \begin{align})
+      const envMatch = cleanLatex.match(/^(.*?\\end\{[^}]+\})(.*?)$/s);
+
+      if (envMatch && envMatch[1] !== undefined) {
+        // Split into environment part and remaining text
+        const envPart = envMatch[1];
+        const textPart = envMatch[2] || '';
+
+        let result = '';
+
+        // Render the environment as display mode LaTeX
+        try {
+          result += katex.renderToString(envPart.trim(), { displayMode: true });
+        } catch (e) {
+          result += envPart; // Keep original if parsing fails
+        }
+
+        // Process remaining text for inline math
+        if (textPart.trim()) {
+          result += textPart.replace(/\$(.+?)\$/g, (_, math) => {
+            try {
+              return katex.renderToString(math, { displayMode: false });
+            } catch (e) {
+              return `$${math}$`; // Return original if parsing fails
+            }
+          });
+        }
+
+        return result;
+      } else {
+        // No LaTeX environment - this is text with potential inline $...$ expressions
+        // Replace inline math expressions within the text
+        return cleanLatex.replace(/\$(.+?)\$/g, (_, math) => {
+          try {
+            return katex.renderToString(math, { displayMode: false });
+          } catch (e) {
+            return `$${math}$`; // Return original if parsing fails
+          }
+        });
+      }
+    } catch (error) {
+      console.error(new Error("could not parse latex for: " + latex, { cause: error }));
+      // Return cleaned content without the tags
+      return cleanAndUnescapeLatex(latex);
     }
   };
 
   return renderedString
-    .replace(/\[\$\$?\](.+?)\[\/\$\$?\]/g, replaceLatex)
-    .replace(/\[latex\](.+?)\[\/latex\]/g, replaceLatex);
+    .replace(/\[\$\$?\](.+?)\[\/\$\$?\]/gs, replaceDisplayMathBlock)
+    .replace(/\[latex\](.+?)\[\/latex\]/gs, replaceLatexBlock);
 }
 
 const SOUND_ICON_SVG =
