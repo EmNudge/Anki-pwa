@@ -6,8 +6,11 @@ import {
   reviewQueueSig,
   schedulerEnabledSig,
   schedulerSettingsSig,
+  toggleScheduler,
+  setSchedulerSettingsModalOpenSig,
 } from "../stores";
 import { SidePanel } from "../design-system/components/layout/SidePanel";
+import { Button } from "../design-system/components/primitives/Button";
 
 export function SRSVisualization() {
   // eslint-disable-next-line no-unused-expressions
@@ -28,6 +31,18 @@ export function SRSVisualization() {
       border-radius: var(--radius-lg);
       font-size: var(--font-size-sm);
       font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      border: none;
+      transition: var(--transition-colors);
+    }
+
+    .status-badge:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .status-badge:active {
+      transform: translateY(0);
     }
 
     .status-enabled {
@@ -157,6 +172,21 @@ export function SRSVisualization() {
       color: var(--color-text-tertiary);
       font-style: italic;
     }
+
+    .scheduler-controls {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-2);
+      padding-top: var(--spacing-4);
+      margin-top: var(--spacing-4);
+      border-top: 1px solid var(--color-border);
+    }
+
+    .button-group {
+      display: flex;
+      gap: var(--spacing-2);
+      flex-wrap: wrap;
+    }
   `;
 
   const currentCard = () => currentReviewCardSig();
@@ -200,11 +230,23 @@ export function SRSVisualization() {
     }
   });
 
+  const handleToggleScheduler = () => {
+    toggleScheduler();
+  };
+
   const statusBadge = (
-    <div class={enabled() ? "status-badge status-enabled" : "status-badge status-disabled"}>
+    <button
+      class={enabled() ? "status-badge status-enabled" : "status-badge status-disabled"}
+      onClick={handleToggleScheduler}
+      title={enabled() ? "Click to disable scheduler" : "Click to enable scheduler"}
+    >
       {enabled() ? "Active" : "Disabled"}
-    </div>
+    </button>
   );
+
+  const handleOpenSettings = () => {
+    setSchedulerSettingsModalOpenSig(true);
+  };
 
   return (
     <SidePanel title="SRS Scheduler" headerAction={statusBadge} class="srs-container">
@@ -340,6 +382,18 @@ export function SRSVisualization() {
         <Show when={!currentCard() && dueCards().length === 0}>
           <div class="no-cards-message">🎉 All done for today! No more cards due.</div>
         </Show>
+      </Show>
+
+      {/* Scheduler Controls */}
+      <Show when={enabled()}>
+        <div class="scheduler-controls">
+          <div class="section-title">Scheduler Controls</div>
+          <div class="button-group">
+            <Button variant="secondary" size="sm" onClick={handleOpenSettings}>
+              Scheduler Settings
+            </Button>
+          </div>
+        </div>
       </Show>
     </SidePanel>
   );
