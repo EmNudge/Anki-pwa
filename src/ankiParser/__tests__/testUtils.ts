@@ -49,6 +49,29 @@ export async function createAnki2Database(): Promise<Database> {
     );
   `);
 
+  db.run(`
+    CREATE TABLE cards (
+      id INTEGER PRIMARY KEY,
+      nid INTEGER NOT NULL,
+      did INTEGER NOT NULL,
+      ord INTEGER NOT NULL,
+      mod INTEGER NOT NULL,
+      usn INTEGER NOT NULL,
+      type INTEGER NOT NULL,
+      queue INTEGER NOT NULL,
+      due INTEGER NOT NULL,
+      ivl INTEGER NOT NULL,
+      factor INTEGER NOT NULL,
+      reps INTEGER NOT NULL,
+      lapses INTEGER NOT NULL,
+      left INTEGER NOT NULL,
+      odue INTEGER NOT NULL,
+      odid INTEGER NOT NULL,
+      flags INTEGER NOT NULL,
+      data TEXT NOT NULL
+    );
+  `);
+
   return db;
 }
 
@@ -100,6 +123,40 @@ export async function createAnki21bDatabase(): Promise<Database> {
     );
   `);
 
+  db.run(`
+    CREATE TABLE cards (
+      id INTEGER PRIMARY KEY,
+      nid INTEGER NOT NULL,
+      did INTEGER NOT NULL,
+      ord INTEGER NOT NULL,
+      mod INTEGER NOT NULL,
+      usn INTEGER NOT NULL,
+      type INTEGER NOT NULL,
+      queue INTEGER NOT NULL,
+      due INTEGER NOT NULL,
+      ivl INTEGER NOT NULL,
+      factor INTEGER NOT NULL,
+      reps INTEGER NOT NULL,
+      lapses INTEGER NOT NULL,
+      left INTEGER NOT NULL,
+      odue INTEGER NOT NULL,
+      odid INTEGER NOT NULL,
+      flags INTEGER NOT NULL,
+      data TEXT NOT NULL
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE decks (
+      id INTEGER PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      mtime_secs INTEGER NOT NULL,
+      usn INTEGER NOT NULL,
+      common BLOB NOT NULL,
+      kind BLOB NOT NULL
+    );
+  `);
+
   return db;
 }
 
@@ -144,7 +201,23 @@ export function insertAnki2Data(db: Database, models: Anki2Model[], notes: Anki2
         ]),
       ),
     ),
-    decks: "{}",
+    decks: JSON.stringify({
+      "1": {
+        id: 1,
+        name: "Default",
+        mod: 0,
+        usn: 0,
+        lrnToday: [0, 0],
+        revToday: [0, 0],
+        newToday: [0, 0],
+        timeToday: [0, 0],
+        collapsed: false,
+        browserCollapsed: false,
+        desc: "",
+        dyn: 0,
+        conf: 1,
+      },
+    }),
     dconf: "{}",
     tags: "{}",
   };
@@ -169,6 +242,13 @@ export function insertAnki2Data(db: Database, models: Anki2Model[], notes: Anki2
       `INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data)
        VALUES (?, ?, ?, 0, 0, ?, ?, '', 0, 0, '')`,
       [note.id, `guid${note.id}`, note.modelId, tagsString, fldsString],
+    );
+
+    // Insert a card for this note (using deck id 1 = Default)
+    db.run(
+      `INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
+       VALUES (?, ?, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '')`,
+      [note.id * 1000, note.id], // Simple card id generation
     );
   }
 }
@@ -315,6 +395,11 @@ export function insertAnki21bData(
     );
   }
 
+  // Insert a default deck
+  db.run(
+    `INSERT INTO decks (id, name, mtime_secs, usn, common, kind) VALUES (1, 'Default', 0, 0, X'', X'')`,
+  );
+
   for (const note of notes) {
     const noteFields = fields.filter((f) => f.ntid === note.mid);
     const fieldValues = noteFields
@@ -330,5 +415,12 @@ export function insertAnki21bData(
       tagsString,
       fldsString,
     ]);
+
+    // Insert a card for this note (using deck id 1 = Default)
+    db.run(
+      `INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
+       VALUES (?, ?, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '')`,
+      [note.id * 1000, note.id], // Simple card id generation
+    );
   }
 }

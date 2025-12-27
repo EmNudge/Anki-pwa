@@ -27,11 +27,11 @@ async function parseAnkiFile(filePath: string) {
   const zipReader = new ZipReader(zipFileReader);
   const entries = await zipReader.getEntries();
 
-  // Find the collection file
+  // Find the collection file - prioritize anki21b as it's the newer format
   const collectionEntry =
-    entries.find((e) => e.filename === "collection.anki2") ||
+    entries.find((e) => e.filename === "collection.anki21b") ||
     entries.find((e) => e.filename === "collection.anki21") ||
-    entries.find((e) => e.filename === "collection.anki21b");
+    entries.find((e) => e.filename === "collection.anki2");
 
   if (!collectionEntry) {
     throw new Error("No collection file found in .apkg");
@@ -55,7 +55,11 @@ async function parseAnkiFile(filePath: string) {
   // Determine which parser to use based on filename
   let result;
   if (collectionEntry.filename === "collection.anki21b") {
-    result = getDataFromAnki21b(db);
+    // Decompress if anki21b - use Node.js version for tests
+    const { decompressZstd } = await import("../../../cli/utils/zstdNode");
+    const decompressed = await decompressZstd(collectionBuffer);
+    const decompressedDb = new SQL.Database(decompressed);
+    result = getDataFromAnki21b(decompressedDb);
   } else {
     result = getDataFromAnki2(db);
   }
@@ -66,6 +70,8 @@ async function parseAnkiFile(filePath: string) {
     cards: result.cards,
     notesTypes: result.notesTypes,
     dbType: collectionEntry.filename,
+    deckName: result.deckName,
+    decks: result.decks,
   };
 }
 
@@ -225,6 +231,44 @@ describe("Real Anki File Parsing", () => {
 
         // At least the first card should have a consistent structure
         expect(firstCardFields.length).toBeGreaterThan(0);
+      }
+    });
+
+    it("should extract all deck information including subdecks", async () => {
+      const filePath = join(__dirname, "example_music_intervals.apkg");
+      const result = await parseAnkiFile(filePath);
+
+      // Verify decks object exists
+      expect(result.decks).toBeDefined();
+      expect(typeof result.decks).toBe("object");
+
+      // Get all deck names
+      const deckNames = Object.values(result.decks).map(d => d.name);
+      console.log(`\n🗂️  Decks found:`);
+      deckNames.forEach(name => console.log(`   - ${name}`));
+
+      // Verify deck name is set
+      expect(result.deckName).toBeDefined();
+      expect(typeof result.deckName).toBe("string");
+      expect(result.deckName).not.toBe("Unknown");
+
+      console.log(`\n📦 Primary deck: ${result.deckName}`);
+
+      // Verify each card has a deckName property
+      result.cards.forEach((card, i) => {
+        expect(card.deckName, `Card ${i} should have deckName`).toBeDefined();
+        expect(typeof card.deckName).toBe("string");
+      });
+
+      // Count cards per deck
+      const cardsByDeck = new Map<string, number>();
+      result.cards.forEach(card => {
+        cardsByDeck.set(card.deckName, (cardsByDeck.get(card.deckName) || 0) + 1);
+      });
+
+      console.log(`\n📊 Cards per deck:`);
+      for (const [deckName, count] of cardsByDeck.entries()) {
+        console.log(`   ${deckName}: ${count} card(s)`);
       }
     });
   });
