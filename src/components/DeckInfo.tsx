@@ -77,6 +77,12 @@ export function DeckInfo() {
       transform: scale(0.98);
     }
 
+    .change-deck-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
     .stats-section {
       margin-top: var(--spacing-4);
       padding-top: var(--spacing-4);
@@ -111,6 +117,18 @@ export function DeckInfo() {
     return templates[selectedIndex];
   });
 
+  // Get the total number of subdecks
+  const deckCount = createMemo(() => {
+    const info = deckInfo();
+    return info?.subdecks.length ?? 0;
+  });
+
+  // Get the total number of templates
+  const templateCount = createMemo(() => {
+    const templates = templatesSig();
+    return templates?.length ?? 0;
+  });
+
   const handleChangeDeck = () => {
     openCommandPalette("switch-deck");
   };
@@ -125,7 +143,7 @@ export function DeckInfo() {
 
       <Show when={deckInfo()?.subdecks && deckInfo()!.subdecks.length > 0}>
         <div class="current-deck-section">
-          <div class="current-deck-label">Current Deck</div>
+          <div class="current-deck-label">Current Deck ({deckCount()})</div>
           <div class="current-deck-display">
             <div class="current-deck-name">
               {selectedSubdeck()?.name ?? "All Cards"}
@@ -135,7 +153,7 @@ export function DeckInfo() {
               {selectedSubdeck()?.templateCount ?? deckInfo()?.templateCount ?? 0} templates
             </div>
           </div>
-          <button class="change-deck-button" onClick={handleChangeDeck}>
+          <button class="change-deck-button" onClick={handleChangeDeck} disabled={deckCount() <= 1}>
             Change Deck
             <FiChevronDown />
           </button>
@@ -144,13 +162,13 @@ export function DeckInfo() {
 
       <Show when={selectedTemplate()}>
         <div class="current-deck-section">
-          <div class="current-deck-label">Current Template</div>
+          <div class="current-deck-label">Current Template ({templateCount()})</div>
           <div class="current-deck-display">
             <div class="current-deck-name">
               {selectedTemplate()?.name}
             </div>
           </div>
-          <button class="change-deck-button" onClick={handleChangeTemplate}>
+          <button class="change-deck-button" onClick={handleChangeTemplate} disabled={templateCount() <= 1}>
             Change Template
             <FiChevronDown />
           </button>

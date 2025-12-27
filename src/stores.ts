@@ -37,7 +37,19 @@ export const [ankiDataSig] = createResource(blobSig, (newBlob) => getAnkiDataFro
 export const [selectedCardSig, setSelectedCardSig] = createSignal(0);
 export const cardsSig = createMemo(() => {
   setSelectedCardSig(0);
-  return ankiDataSig()?.cards ?? [];
+  const ankiData = ankiDataSig();
+  const selectedDeckId = selectedDeckIdSig();
+
+  if (!ankiData) return [];
+
+  // If no deck is selected, return all cards
+  if (!selectedDeckId) return ankiData.cards;
+
+  // Filter cards by the selected deck
+  const selectedDeck = ankiData.decks[selectedDeckId];
+  if (!selectedDeck) return ankiData.cards;
+
+  return ankiData.cards.filter((card) => card.deckName === selectedDeck.name);
 });
 
 export const [selectedTemplateSig, setSelectedTemplateSig] = createSignal(0);
