@@ -160,15 +160,59 @@ export function useCommands() {
             })),
           ]
         : []),
-      ...cardsSig().map((_card, index) => ({
-        id: `Card ${index + 1}`,
-        title: `Card ${index + 1}`,
-        icon: <FiLayers />,
-        parent: "select-card",
-        handler: () => {
-          setSelectedCardSig(index);
-        },
-      })),
+      ...cardsSig().map((card, index) => {
+        // Helper function to strip HTML tags and truncate text
+        const getPreviewText = (html: string | null, maxLength = 50) => {
+          if (!html) return "";
+          const text = html.replace(/<[^>]*>/g, "").trim();
+          return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
+        };
+
+        console.log('card values', card.values);
+
+        // Build metadata array with all card fields
+        const metadata = [
+          // Map all field values
+          ...Object.entries(card.values).map(([fieldName, fieldValue]) => ({
+            label: fieldName,
+            value: <div style={{ "white-space": "pre-wrap", "word-break": "break-word" }}>
+              {fieldValue}
+            </div>,
+          })),
+          // Add tags if present
+          ...(card.tags && card.tags.length > 0 ? [{
+            label: "Tags",
+            value: card.tags.join(", "),
+          }] : []),
+          // Add deck name if present
+          ...(card.deckName ? [{
+            label: "Deck",
+            value: card.deckName,
+          }] : []),
+          // Add template count
+          {
+            label: `Templates ${card.templates.length}`,
+            value: card.templates.map((template) => template.name).join(", "),
+          },
+        ];
+
+        // Create a more descriptive title using the first field value
+        const firstFieldValue = Object.values(card.values)[0];
+        const cardTitle = firstFieldValue
+          ? `Card ${index + 1}: ${getPreviewText(firstFieldValue, 30)}`
+          : `Card ${index + 1}`;
+
+        return {
+          id: `Card ${index + 1}`,
+          title: cardTitle,
+          icon: <FiLayers />,
+          parent: "select-card",
+          metadata,
+          handler: () => {
+            setSelectedCardSig(index);
+          },
+        };
+      }),
       ...(templates
         ? [
             {
