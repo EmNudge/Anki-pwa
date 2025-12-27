@@ -2,4 +2,6 @@
 
 I don't love a lot of the Anki web interfaces. Theoretically you could replace all of them with a PWA which allows for simpler styling.
 
-<img width="1182" height="768" alt="image" src="https://github.com/user-attachments/assets/76bb394b-ad96-443f-adb4-1d7bba82e8af" />
+|Anki PWA|
+|-|
+|<img width="1161" height="758" alt="image" src="https://github.com/user-attachments/assets/2b9249fa-efbe-47a3-a45e-69a0bbe6da6d" />|

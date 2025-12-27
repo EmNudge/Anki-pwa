@@ -6,6 +6,7 @@ export interface Command {
   title: string;
   icon?: JSX.Element;
   hotkey?: string;
+  label?: string;
   parent?: string;
   children?: string[];
   handler?: () => void | { keepOpen: boolean };
