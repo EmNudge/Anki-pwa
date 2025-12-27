@@ -1,6 +1,7 @@
 import { Show, For, createSignal, createEffect, onCleanup } from "solid-js";
 import { css } from "solid-styled";
 import { commandPaletteOpenSig, setCommandPaletteOpenSig, type Command } from "../commandPaletteStore";
+import { FiSearch } from "solid-icons/fi";
 
 export function CommandPalette(props: { commands: Command[] }) {
   const [searchQuery, setSearchQuery] = createSignal("");
@@ -420,7 +421,7 @@ export function CommandPalette(props: { commands: Command[] }) {
               </div>
             </Show>
             <div class="command-palette-search">
-              <span class="command-palette-search-icon">🔍</span>
+              <span class="command-palette-search-icon"><FiSearch /></span>
               <input
                 ref={setInputRef}
                 class="command-palette-input"
