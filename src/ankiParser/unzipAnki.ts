@@ -91,9 +91,28 @@ async function getFilesFromEntries(entries: Entry[]): Promise<Map<string, string
     .filter(isTruthy)
     .map(async ({ entry, actualFilename }) => {
       const blob = await entry.getData(new BlobWriter());
+      let fileBytes = new Uint8Array(await blob.arrayBuffer());
+
+      // Check if file is Zstandard compressed and decompress if needed
+      // Zstandard magic number is 0x28 0xB5 0x2F 0xFD
+      const isZstdCompressed = fileBytes.length >= 4 &&
+        fileBytes[0] === 0x28 &&
+        fileBytes[1] === 0xB5 &&
+        fileBytes[2] === 0x2F &&
+        fileBytes[3] === 0xFD;
+
+      if (isZstdCompressed) {
+        try {
+          const decompressed = await decompressZstd(fileBytes);
+          fileBytes = new Uint8Array(decompressed);
+        } catch (_decompError) {
+          // If decompression fails, use original bytes
+          // This allows graceful fallback for files that aren't actually compressed
+        }
+      }
 
       return {
-        data: new Blob([blob], {
+        data: new Blob([fileBytes], {
           type: mime.getType(actualFilename) ?? "application/octet-stream",
         }),
         name: actualFilename,
