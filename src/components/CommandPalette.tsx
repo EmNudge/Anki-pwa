@@ -185,6 +185,19 @@ export function CommandPalette(props: { commands: Command[] }) {
       font-weight: var(--font-weight-medium);
     }
 
+    .command-item-title-highlight {
+      background: var(--color-primary-100);
+      color: var(--color-primary-700);
+      font-weight: var(--font-weight-semibold);
+      border-radius: var(--radius-xs);
+      padding: 0 2px;
+    }
+
+    :root[data-theme="dark"] .command-item-title-highlight {
+      background: var(--color-primary-900);
+      color: var(--color-primary-300);
+    }
+
     .command-item-hotkey {
       display: flex;
       gap: var(--spacing-1);
@@ -398,6 +411,28 @@ export function CommandPalette(props: { commands: Command[] }) {
     );
   };
 
+  const highlightMatch = (title: string, query: string) => {
+    if (!query) return title;
+
+    const lowerTitle = title.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+    const index = lowerTitle.indexOf(lowerQuery);
+
+    if (index === -1) return title;
+
+    const before = title.slice(0, index);
+    const match = title.slice(index, index + query.length);
+    const after = title.slice(index + query.length);
+
+    return (
+      <>
+        {before}
+        <span class="command-item-title-highlight">{match}</span>
+        {after}
+      </>
+    );
+  };
+
   return (
     <Show when={commandPaletteOpenSig()}>
       <div class="command-palette-overlay" onClick={closeCommandPalette}>
@@ -451,7 +486,7 @@ export function CommandPalette(props: { commands: Command[] }) {
                       <Show when={cmd.icon}>
                         <span class="command-item-icon">{cmd.icon}</span>
                       </Show>
-                      <span class="command-item-title">{cmd.title}</span>
+                      <span class="command-item-title">{highlightMatch(cmd.title, searchQuery())}</span>
                     </div>
                     <Show when={cmd.children && cmd.children.length > 0}>
                       <span class="command-item-arrow">→</span>
