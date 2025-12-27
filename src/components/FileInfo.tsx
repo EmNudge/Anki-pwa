@@ -5,6 +5,7 @@ import { SidePanel } from "../design-system/components/layout/SidePanel";
 import { StatItem } from "../design-system/components/primitives/StatItem";
 import { openCommandPalette } from "../commandPaletteStore";
 import { FiChevronDown } from "solid-icons/fi";
+import { pluralizeWithCount } from "../utils/pluralize";
 
 export function FileInfo() {
   // eslint-disable-next-line no-unused-expressions
@@ -127,9 +128,7 @@ export function FileInfo() {
   const allTemplatesCount = createMemo(() => {
     const data = ankiDataSig();
     if (!data) return 0;
-    const names = new Set(
-      data.cards.flatMap((card) => card.templates.map((t) => t.name)),
-    );
+    const names = new Set(data.cards.flatMap((card) => card.templates.map((t) => t.name)));
     return names.size;
   });
 
@@ -168,11 +167,10 @@ export function FileInfo() {
         <div class="current-deck-section">
           <div class="current-deck-label">Current Deck ({deckCount()})</div>
           <div class="current-deck-display">
-            <div class="current-deck-name">
-              {currentDeckName()}
-            </div>
+            <div class="current-deck-name">{currentDeckName()}</div>
             <div class="current-deck-stats">
-              {currentCardCount()} cards • {currentTemplateCount()} templates
+              {pluralizeWithCount(currentCardCount(), "card", "cards")} •{" "}
+              {pluralizeWithCount(currentTemplateCount(), "template", "templates")}
             </div>
           </div>
           <button class="change-deck-button" onClick={handleChangeDeck} disabled={deckCount() <= 1}>
@@ -185,22 +183,24 @@ export function FileInfo() {
       <div class="stats-section">
         <div class="stats-title">Browse</div>
         <div class="browse-item">
-          <StatItem
-            label="All Notes"
-            value={allNotesCount()}
-          />
+          <StatItem label="All Notes" value={allNotesCount()} />
         </div>
-        <button class="change-deck-button browse-button" onClick={handleBrowseAllNotes} disabled={allNotesCount() === 0}>
+        <button
+          class="change-deck-button browse-button"
+          onClick={handleBrowseAllNotes}
+          disabled={allNotesCount() === 0}
+        >
           Browse All Notes
           <FiChevronDown />
         </button>
         <div class="browse-item">
-          <StatItem
-            label="All Templates"
-            value={allTemplatesCount()}
-          />
+          <StatItem label="All Templates" value={allTemplatesCount()} />
         </div>
-        <button class="change-deck-button" onClick={handleBrowseAllTemplates} disabled={allTemplatesCount() === 0}>
+        <button
+          class="change-deck-button"
+          onClick={handleBrowseAllTemplates}
+          disabled={allTemplatesCount() === 0}
+        >
           Browse All Templates
           <FiChevronDown />
         </button>
