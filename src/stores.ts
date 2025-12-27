@@ -118,6 +118,10 @@ export async function initializeReviewQueue() {
   const templates = templatesSig();
 
   if (cards.length === 0 || !templates || templates.length === 0) {
+    // Clear queue state if no cards/templates
+    setReviewQueueSig(null);
+    setDueCardsSig([]);
+    setCurrentReviewCardSig(null);
     return;
   }
 

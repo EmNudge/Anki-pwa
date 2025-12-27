@@ -19,6 +19,7 @@ import {
   schedulerEnabledSig,
   schedulerSettingsModalOpenSig,
   selectedCardSig,
+  selectedDeckIdSig,
   selectedTemplateSig,
   setBlobSig,
   setDeckInfoSig,
@@ -147,10 +148,12 @@ function App() {
   });
 
   // Initialize review queue when cards are loaded and scheduler is enabled
+  // Also track selectedDeckIdSig to ensure re-initialization on deck change
   createEffect(() => {
     const cards = cardsSig();
     const templates = templatesSig();
     const schedulerEnabled = schedulerEnabledSig();
+    selectedDeckIdSig(); // Track deck changes explicitly
 
     if (cards.length > 0 && templates && templates.length > 0 && schedulerEnabled) {
       initializeReviewQueue();
