@@ -12,6 +12,7 @@ import {
   resetScheduler,
 } from "./stores";
 import type { Command } from "./commandPaletteStore";
+import { FiFolder, FiArrowRight, FiLayers, FiMoon, FiVolume2, FiVolumeX, FiPause, FiPlay, FiSettings, FiRefreshCw, FiClipboard, FiFile } from "solid-icons/fi";
 
 export function useCommands() {
   return createMemo<Command[]>(() => {
@@ -23,7 +24,7 @@ export function useCommands() {
       {
         id: "upload-file",
         title: "Upload Anki Deck",
-        icon: "📂",
+        icon: <FiFolder />,
         hotkey: "ctrl+N",
         handler: () => {
           const inputEl = document.createElement("input");
@@ -41,7 +42,7 @@ export function useCommands() {
       {
         id: "next-card",
         title: "Next Card",
-        icon: "→",
+        icon: <FiArrowRight />,
         hotkey: ">",
         handler: () => {
           setSelectedCardSig((prevCard) => prevCard + 1);
@@ -50,7 +51,7 @@ export function useCommands() {
       {
         id: "select-card",
         title: "Select Card",
-        icon: "🃏",
+        icon: <FiLayers />,
         hotkey: "ctrl+S",
         children: cardsSig().map((_card, index) => `Card ${index + 1}`),
         handler: () => {
@@ -61,7 +62,7 @@ export function useCommands() {
       {
         id: "toggle-theme",
         title: "Toggle Theme",
-        icon: "🌓",
+        icon: <FiMoon />,
         hotkey: "ctrl+T",
         handler: () => {
           const currentTheme = document.documentElement.getAttribute("data-theme");
@@ -73,7 +74,7 @@ export function useCommands() {
       {
         id: "toggle-sound-effects",
         title: `${soundEffectsEnabledSig() ? "Disable" : "Enable"} Sound Effects`,
-        icon: soundEffectsEnabledSig() ? "🔊" : "🔇",
+        icon: soundEffectsEnabledSig() ? <FiVolume2 /> : <FiVolumeX />,
         hotkey: "ctrl+E",
         handler: () => {
           toggleSoundEffects();
@@ -82,7 +83,7 @@ export function useCommands() {
       {
         id: "toggle-scheduler",
         title: `${schedulerEnabledSig() ? "Disable" : "Enable"} Scheduler`,
-        icon: schedulerEnabledSig() ? "⏸️" : "▶️",
+        icon: schedulerEnabledSig() ? <FiPause /> : <FiPlay />,
         hotkey: "ctrl+R",
         handler: () => {
           toggleScheduler();
@@ -91,7 +92,7 @@ export function useCommands() {
       {
         id: "scheduler-settings",
         title: "Scheduler Settings",
-        icon: "⚙️",
+        icon: <FiSettings />,
         hotkey: "ctrl+,",
         handler: () => {
           setSchedulerSettingsModalOpenSig(true);
@@ -100,7 +101,7 @@ export function useCommands() {
       {
         id: "reset-scheduler",
         title: "Reset Scheduler",
-        icon: "🔄",
+        icon: <FiRefreshCw />,
         handler: () => {
           resetScheduler();
         },
@@ -108,7 +109,7 @@ export function useCommands() {
       ...cardsSig().map((_card, index) => ({
         id: `Card ${index + 1}`,
         title: `Card ${index + 1}`,
-        icon: "🃏",
+        icon: <FiLayers />,
         parent: "select-card",
         handler: () => {
           setSelectedCardSig(index);
@@ -119,7 +120,7 @@ export function useCommands() {
             {
               id: "select-template",
               title: "Select Template",
-              icon: "📋",
+              icon: <FiClipboard />,
               hotkey: "ctrl+L",
               children: templates.map((template) => template.name),
               handler: () => {
@@ -130,7 +131,7 @@ export function useCommands() {
             ...templates.map((template, index) => ({
               id: template.name,
               title: template.name,
-              icon: "📄",
+              icon: <FiFile />,
               parent: "select-template",
               handler: () => {
                 setSelectedTemplateSig(index);
