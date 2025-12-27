@@ -10,8 +10,9 @@ This directory contains comprehensive tests for the Anki parser, covering both A
 - **`anki2.test.ts`** - Tests for the Anki2 parser
 - **`anki21b.test.ts`** - Tests for the Anki21b parser
 - **`integration.test.ts`** - Integration tests covering complete workflows and edge cases
-- **`realFile.test.ts`** - Tests parsing of real .apkg files (example_music_intervals.apkg)
-- **`example_music_intervals.apkg`** - Sample Anki deck file for testing real file parsing
+- **`realFile.test.ts`** - Tests parsing of real .apkg files
+- **`example_music_intervals.apkg`** - Sample Anki deck file (Anki 2.1+ format, version 18)
+- **`ap_gov_vocab_anki11.apkg`** - Sample Anki deck file (Legacy Anki 2.0/2.1 format, version 11)
 
 ## Running Tests
 
@@ -64,10 +65,11 @@ End-to-end tests covering:
 - RTL text field support
 - Large decks with 100+ notes
 
-### Real File Tests (8 tests)
+### Real File Tests (18 tests)
 
-Tests parsing of actual .apkg files:
+Tests parsing of actual .apkg files with different format versions:
 
+**example_music_intervals.apkg (Anki 2.1+, version 18):**
 - Basic deck parsing and structure validation
 - Card data extraction with correct field mapping
 - Template parsing with required fields
@@ -76,6 +78,16 @@ Tests parsing of actual .apkg files:
 - Deck statistics logging (cards, fields, tags)
 - Database type detection (Anki2/Anki21/Anki21b)
 - Field structure consistency across cards
+
+**ap_gov_vocab_anki11.apkg (Legacy Anki 2.0/2.1, version 11):**
+- Legacy format parsing and compatibility
+- Collection version 11 detection (V1 scheduler)
+- Card data extraction from older format
+- Template parsing with required fields
+- Tag parsing from legacy format
+- Deck statistics (242 cards with chapter tags)
+- Field structure validation across all cards
+- Legacy format compatibility with modern parser
 
 ## Parsing Real .apkg Files
 
@@ -91,12 +103,21 @@ console.log(`Database type: ${result.dbType}`);
 console.log(`Fields:`, Object.keys(result.cards[0].values));
 ```
 
-The `example_music_intervals.apkg` file contains:
+### Test Files
 
+**example_music_intervals.apkg:**
+- Anki 2.1+ format (collection version 18)
 - 1 card with Front/Back fields
-- Anki2 format database
+- Modern Anki2 format database
 - No tags or media files
 - Basic card template
+
+**ap_gov_vocab_anki11.apkg:**
+- Legacy Anki 2.0/2.1 format (collection version 11)
+- 242 vocabulary cards with Front/Back fields
+- Chapter-based tagging system (Ch.1 through Ch.16)
+- V1 scheduler (legacy)
+- Tests backward compatibility with older Anki exports
 
 ## Building Test Databases from Scratch
 
